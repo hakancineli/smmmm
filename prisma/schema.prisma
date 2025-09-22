@@ -1,0 +1,187 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Superuser tablosu - Geliştirici hesapları
+model Superuser {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String   @map("password_hash")
+  email        String?  @unique
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // İlişkiler
+  smmmAccounts SMMMAccount[]
+
+  @@map("superusers")
+}
+
+// SMMM (Tenant) tablosu
+model SMMMAccount {
+  id              String   @id @default(uuid())
+  superuserId     String   @map("superuser_id")
+  companyName     String   @map("company_name")
+  username        String   @unique
+  passwordHash    String   @map("password_hash")
+  email           String?  @unique
+  phone           String?
+  address         String?
+  subscriptionPlan String? @map("subscription_plan")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // İlişkiler
+  superuser   Superuser    @relation(fields: [superuserId], references: [id], onDelete: Cascade)
+  taxpayers   Taxpayer[]
+  payments    Payment[]
+  credentials EDevletCredential[]
+
+  @@map("smmm_accounts")
+}
+
+// Mükellef tablosu
+model Taxpayer {
+  id          String   @id @default(uuid())
+  smmmId      String   @map("smmm_id")
+  tcNumber    String   @unique @map("tc_number")
+  taxNumber   String?  @map("tax_number")
+  firstName   String   @map("first_name")
+  lastName    String   @map("last_name")
+  companyName String?  @map("company_name")
+  email       String?
+  phone       String?
+  address     String?
+  monthlyFee  Decimal  @default(0) @map("monthly_fee") @db.Decimal(10, 2)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // İlişkiler
+  smmm        SMMMAccount        @relation(fields: [smmmId], references: [id], onDelete: Cascade)
+  payments    Payment[]
+  credentials EDevletCredential[]
+  documents   Document[]
+
+  @@map("taxpayers")
+}
+
+// Aylık ödeme takibi
+model Payment {
+  id            String        @id @default(uuid())
+  taxpayerId    String        @map("taxpayer_id")
+  smmmId        String        @map("smmm_id")
+  year          Int
+  month         Int
+  amount        Decimal       @db.Decimal(10, 2)
+  paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
+  paymentDate   DateTime?     @map("payment_date")
+  notes         String?
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  // İlişkiler
+  taxpayer Taxpayer   @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
+  smmm     SMMMAccount @relation(fields: [smmmId], references: [id], onDelete: Cascade)
+
+  @@unique([taxpayerId, year, month])
+  @@map("payments")
+}
+
+// E-Devlet şifreleri
+model EDevletCredential {
+  id           String   @id @default(uuid())
+  taxpayerId   String   @map("taxpayer_id")
+  smmmId       String   @map("smmm_id")
+  platform     Platform
+  username     String?
+  passwordEncrypted String @map("password_encrypted")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // İlişkiler
+  taxpayer Taxpayer   @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
+  smmm     SMMMAccount @relation(fields: [smmmId], references: [id], onDelete: Cascade)
+
+  @@unique([taxpayerId, platform])
+  @@map("edevlet_credentials")
+}
+
+// Doküman yönetimi
+model Document {
+  id          String   @id @default(uuid())
+  taxpayerId  String   @map("taxpayer_id")
+  title       String
+  description String?
+  filePath    String   @map("file_path")
+  fileType    String   @map("file_type")
+  fileSize    Int      @map("file_size")
+  documentType DocumentType @map("document_type")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // İlişkiler
+  taxpayer Taxpayer @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+// WhatsApp mesaj geçmişi
+model WhatsAppMessage {
+  id          String   @id @default(uuid())
+  taxpayerId  String   @map("taxpayer_id")
+  smmmId      String   @map("smmm_id")
+  messageType MessageType @map("message_type")
+  content     String
+  filePath    String?  @map("file_path")
+  status      MessageStatus @default(PENDING)
+  sentAt      DateTime? @map("sent_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("whatsapp_messages")
+}
+
+// Enums
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum Platform {
+  EARSIV_PORTAL
+  DIJITAL_GIB
+  ISTANBUL_GIB
+}
+
+enum DocumentType {
+  BEYANNAME
+  FATURA
+  SOZLESME
+  DIGER
+}
+
+enum MessageType {
+  PAYMENT_REMINDER
+  BEYANNAME_NOTIFICATION
+  GENERAL_MESSAGE
+}
+
+enum MessageStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+}
