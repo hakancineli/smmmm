@@ -149,9 +149,9 @@ export async function GET(request: NextRequest) {
 
       return {
         month: monthName,
-        paid: paid?._sum.amount || 0,
-        pending: pending?._sum.amount || 0,
-        overdue: overdue?._sum.amount || 0,
+        paid: Number(paid?._sum.amount || 0),
+        pending: Number(pending?._sum.amount || 0),
+        overdue: Number(overdue?._sum.amount || 0),
       };
     });
 
@@ -162,8 +162,8 @@ export async function GET(request: NextRequest) {
       paidPayments,
       pendingPayments,
       overduePayments,
-      monthlyRevenue: monthlyRevenue._sum.amount || 0,
-      yearlyRevenue: yearlyRevenue._sum.amount || 0,
+      monthlyRevenue: Number(monthlyRevenue._sum.amount || 0),
+      yearlyRevenue: Number(yearlyRevenue._sum.amount || 0),
     };
 
     return NextResponse.json({
