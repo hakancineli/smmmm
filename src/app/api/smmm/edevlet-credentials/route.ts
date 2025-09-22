@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     // SMMM authentication
     const authHeader = request.headers.get('authorization');
-    const token = getTokenFromHeader(authHeader);
+    const token = getTokenFromHeader(authHeader || undefined);
     
     if (!token) {
       return NextResponse.json(
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
   try {
     // SMMM authentication
     const authHeader = request.headers.get('authorization');
-    const token = getTokenFromHeader(authHeader);
+    const token = getTokenFromHeader(authHeader || undefined);
     
     if (!token) {
       return NextResponse.json(

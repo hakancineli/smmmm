@@ -9,7 +9,7 @@ export async function PUT(
   try {
     // SMMM authentication
     const authHeader = request.headers.get('authorization');
-    const token = getTokenFromHeader(authHeader);
+    const token = getTokenFromHeader(authHeader || undefined);
     
     if (!token) {
       return NextResponse.json(
@@ -100,7 +100,7 @@ export async function DELETE(
   try {
     // SMMM authentication
     const authHeader = request.headers.get('authorization');
-    const token = getTokenFromHeader(authHeader);
+    const token = getTokenFromHeader(authHeader || undefined);
     
     if (!token) {
       return NextResponse.json(

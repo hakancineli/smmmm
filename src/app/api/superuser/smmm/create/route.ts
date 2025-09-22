@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   try {
     // Superuser authentication
     const authHeader = request.headers.get('authorization');
-    const token = getTokenFromHeader(authHeader);
+    const token = getTokenFromHeader(authHeader || undefined);
     
     if (!token) {
       return NextResponse.json(
