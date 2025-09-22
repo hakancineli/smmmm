@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         where: { id: payload.id, isActive: true }
       });
     } else if (payload.type === 'smmm') {
-      user = await prisma.sMMM.findUnique({
+      user = await prisma.sMMMAccount.findUnique({
         where: { id: payload.id, isActive: true }
       });
     }
