@@ -153,9 +153,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TC No uniqueness check
-    const existingTaxpayer = await prisma.taxpayer.findUnique({
-      where: { tcNumber },
+    // TC No uniqueness check within the same SMMM
+    const existingTaxpayer = await prisma.taxpayer.findFirst({
+      where: { 
+        tcNumber,
+        smmmId: payload.id
+      },
     });
 
     if (existingTaxpayer) {
@@ -165,10 +168,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Tax Number uniqueness check (if provided)
+    // Tax Number uniqueness check within the same SMMM (if provided)
     if (taxNumber) {
       const existingTaxNumber = await prisma.taxpayer.findFirst({
-        where: { taxNumber },
+        where: { 
+          taxNumber,
+          smmmId: payload.id
+        },
       });
 
       if (existingTaxNumber) {
