@@ -110,41 +110,50 @@ export default function TaxpayersPage() {
   };
 
   const getPaymentStatus = (taxpayer: Taxpayer) => {
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1;
-    
-    const currentPayment = taxpayer.payments.find(
-      p => p.year === currentYear && p.month === currentMonth
+    const now = new Date();
+    const overdueDay = 20; // Ayın 20'sinden sonra ödenmemişse "Gecikti"
+    // Hedef ay: içinde bulunulan aydan bir önceki ay
+    const target = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const targetYear = target.getFullYear();
+    const targetMonth = target.getMonth() + 1; // 1-12
+
+    const payment = taxpayer.payments.find(
+      p => p.year === targetYear && p.month === targetMonth
     );
 
-    if (!currentPayment) return { status: 'pending', text: 'Bekliyor' };
-    
-    switch (currentPayment.paymentStatus) {
-      case 'PAID':
-        return { status: 'paid', text: 'Ödendi' };
-      case 'OVERDUE':
-        return { status: 'overdue', text: 'Gecikti' };
-      default:
-        return { status: 'pending', text: 'Bekliyor' };
+    if (payment) {
+      if (payment.paymentStatus === 'PAID') return { status: 'paid', text: 'Ödendi' };
+      if (payment.paymentStatus === 'OVERDUE') return { status: 'overdue', text: 'Gecikti' };
     }
+
+    // Otomatik gecikme kuralı: ayın 20'si sonrası ve henüz ödenmediyse "Gecikti"
+    if (now.getDate() > overdueDay) {
+      return { status: 'overdue', text: 'Gecikti' };
+    }
+
+    return { status: 'pending', text: 'Bekliyor' };
   };
 
   const getDebtBalance = (taxpayer: Taxpayer) => {
-    const currentYear = new Date().getFullYear();
-    
-    // Bu yıl için bekleyen ve geciken ödemeleri hesapla
-    const unpaidPayments = taxpayer.payments.filter(
-      p => p.year === currentYear && 
-           (p.paymentStatus === 'PENDING' || p.paymentStatus === 'OVERDUE')
+    const now = new Date();
+    // Hedef ay: içinde bulunulan aydan bir önceki ay
+    const target = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const targetYear = target.getFullYear();
+    const targetMonth = target.getMonth() + 1; // 1-12
+
+    const payment = taxpayer.payments.find(
+      p => p.year === targetYear && p.month === targetMonth
     );
-    
-    const totalDebt = unpaidPayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
-    
-    return {
-      totalDebt,
-      unpaidMonths: unpaidPayments.length,
-      hasDebt: totalDebt > 0
-    };
+
+    let totalDebt = 0;
+    let unpaidMonths = 0;
+
+    if (!payment || payment.paymentStatus !== 'PAID') {
+      totalDebt = Number((taxpayer as any).monthlyFee || 0);
+      unpaidMonths = 1;
+    }
+
+    return { totalDebt, unpaidMonths, hasDebt: totalDebt > 0 };
   };
 
   if (isLoading && taxpayers.length === 0) {

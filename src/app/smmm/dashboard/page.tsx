@@ -161,54 +161,51 @@ export default function SMMMDashboard() {
 
   const getPaymentStatus = (taxpayer: Taxpayer) => {
     if (!taxpayer.payments || taxpayer.payments.length === 0) {
-      return { status: 'PENDING', color: 'warning' };
+      return { status: 'Bekliyor', color: 'warning' };
     }
 
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1;
-    
-    const currentPayment = taxpayer.payments.find(
-      p => p.year === currentYear && p.month === currentMonth
+    const now = new Date();
+    const overdueDay = 20;
+    const target = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const targetYear = target.getFullYear();
+    const targetMonth = target.getMonth() + 1;
+
+    const payment = taxpayer.payments.find(
+      p => p.year === targetYear && p.month === targetMonth
     );
 
-    if (!currentPayment) {
-      return { status: 'PENDING', color: 'warning' };
+    if (payment) {
+      if (payment.paymentStatus === 'PAID') return { status: 'Ödendi', color: 'success' };
+      if (payment.paymentStatus === 'OVERDUE') return { status: 'Gecikti', color: 'danger' };
     }
 
-    switch (currentPayment.paymentStatus) {
-      case 'PAID':
-        return { status: 'Ödendi', color: 'success' };
-      case 'OVERDUE':
-        return { status: 'Gecikti', color: 'danger' };
-      default:
-        return { status: 'Bekliyor', color: 'warning' };
-    }
+    if (now.getDate() > overdueDay) return { status: 'Gecikti', color: 'danger' };
+    return { status: 'Bekliyor', color: 'warning' };
   };
 
   const getDebtSummary = (taxpayer: Taxpayer) => {
     const payments = (taxpayer as any).payments || (taxpayer as any).monthlyPayments || [];
     const charges = (taxpayer as any).charges || [];
 
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1;
+    const now = new Date();
+    const target = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const targetYear = target.getFullYear();
+    const targetMonth = target.getMonth() + 1;
     
     let total = 0;
     let unpaid = 0;
 
-    for (let month = 1; month <= currentMonth; month++) {
-      const payment = payments.find(
-        (p: any) => p.year === currentYear && p.month === month
-      );
-      
-      if (payment) {
-        total += Number(payment.amount || 0);
-        if (payment.paymentStatus !== 'PAID') {
-          unpaid += Number(payment.amount || 0);
-        }
-      } else {
-        total += Number((taxpayer as any).monthlyFee || 0);
-        unpaid += Number((taxpayer as any).monthlyFee || 0);
+    // Hedef (bir önceki) ay için hesapla
+    const payment = payments.find((p: any) => p.year === targetYear && p.month === targetMonth);
+    if (payment) {
+      total += Number(payment.amount || 10 * 0); // keep type number
+      if (payment.paymentStatus !== 'PAID') {
+        unpaid += Number(payment.amount || 0);
       }
+    } else {
+      const fee = Number((taxpayer as any).monthlyFee || 0);
+      total += fee;
+      unpaid += fee;
     }
 
     for (const charge of charges) {

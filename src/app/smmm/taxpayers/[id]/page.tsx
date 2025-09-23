@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import { PDFDocument, StandardFonts } from 'pdf-lib';
 
 interface Taxpayer {
   id: string;
@@ -25,6 +26,15 @@ interface Taxpayer {
     paymentStatus: string;
     paymentDate?: string;
     notes?: string;
+  }[];
+  charges?: {
+    id: string;
+    title: string;
+    type?: string;
+    amount: number;
+    status: string;
+    dueDate?: string;
+    createdAt: string;
   }[];
 }
 
@@ -70,28 +80,28 @@ export default function TaxpayerDetailPage() {
   };
 
   const getPaymentStatusText = (status: string) => {
-    switch (status) {
+    const s = (status || '').toUpperCase();
+    switch (s) {
       case 'PAID':
         return 'Ödendi';
-      case 'PENDING':
-        return 'Bekliyor';
       case 'OVERDUE':
         return 'Gecikti';
+      case 'PENDING':
       default:
-        return status;
+        return 'Bekliyor';
     }
   };
 
   const getPaymentStatusColor = (status: string) => {
-    switch (status) {
+    const s = (status || '').toUpperCase();
+    switch (s) {
       case 'PAID':
         return 'text-green-600 bg-green-100';
-      case 'PENDING':
-        return 'text-yellow-600 bg-yellow-100';
       case 'OVERDUE':
         return 'text-red-600 bg-red-100';
+      case 'PENDING':
       default:
-        return 'text-gray-600 bg-gray-100';
+        return 'text-yellow-600 bg-yellow-100';
     }
   };
 
@@ -118,6 +128,103 @@ export default function TaxpayerDetailPage() {
       totalDebt,
       unpaidMonths: unpaidPayments.length
     };
+  };
+
+  const exportPaymentsAsCSV = () => {
+    if (!taxpayer) return;
+    const headers = ['Yıl', 'Ay', 'Tutar', 'Durum', 'Ödeme Tarihi'];
+    const months = [
+      'Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'
+    ];
+    const rows = taxpayer.payments
+      .sort((a,b)=> b.year - a.year || b.month - a.month)
+      .map(p => [
+        p.year,
+        months[p.month-1],
+        (Number(p.amount)||0).toString().replace('.', ','),
+        getPaymentStatusText(p.paymentStatus),
+        p.paymentDate ? new Date(p.paymentDate).toLocaleDateString('tr-TR') : ''
+      ]);
+
+    const csv = [headers, ...rows]
+      .map(r => r.map(field => `"${String(field).replace(/"/g,'""')}"`).join(';'))
+      .join('\n');
+
+    const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${taxpayer.firstName}_${taxpayer.lastName}_odeme_gecmisi.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportPaymentsAsPDF = async () => {
+    if (!taxpayer) return;
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([595.28, 841.89]); // A4
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const normalize = (t: string) =>
+      t
+        .replace(/Ş/g, 'S')
+        .replace(/ş/g, 's')
+        .replace(/İ/g, 'I')
+        .replace(/ı/g, 'i')
+        .replace(/Ç/g, 'C')
+        .replace(/ç/g, 'c')
+        .replace(/Ğ/g, 'G')
+        .replace(/ğ/g, 'g')
+        .replace(/Ö/g, 'O')
+        .replace(/ö/g, 'o')
+        .replace(/Ü/g, 'U')
+        .replace(/ü/g, 'u')
+        .replace(/₺/g, 'TL ');
+    let y = 800;
+    const left = 40;
+    const lineHeight = 16;
+    const title = `${taxpayer.firstName} ${taxpayer.lastName} - Ödeme Geçmişi`;
+    page.drawText(normalize(title), { x: left, y, size: 14, font });
+    y -= 24;
+    const headers = ['Yıl', 'Ay', 'Tutar', 'Durum', 'Ödeme Tarihi'];
+    page.drawText(normalize(headers.join('    ')), { x: left, y, size: 10, font });
+    y -= 12;
+    page.drawLine({ start: { x: left, y }, end: { x: 555, y }, thickness: 0.5 });
+    y -= 14;
+    const months = [
+      'Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'
+    ];
+    taxpayer.payments
+      .sort((a,b)=> b.year - a.year || b.month - a.month)
+      .forEach(p => {
+        const cols = [
+          String(p.year),
+          months[p.month-1],
+          `₺${Number(p.amount||0).toLocaleString('tr-TR')}`,
+          getPaymentStatusText(p.paymentStatus),
+          p.paymentDate ? new Date(p.paymentDate).toLocaleDateString('tr-TR') : ''
+        ];
+        page.drawText(normalize(cols.join('    ')), { x: left, y, size: 10, font });
+        y -= lineHeight;
+        if (y < 60) {
+          y = 800;
+          const newPage = pdfDoc.addPage([595.28, 841.89]);
+          newPage.drawText(normalize(title), { x: left, y, size: 14, font });
+          y -= 24;
+          newPage.drawText(normalize(headers.join('    ')), { x: left, y, size: 10, font });
+          y -= 12;
+          newPage.drawLine({ start: { x: left, y }, end: { x: 555, y }, thickness: 0.5 });
+          y -= 14;
+        }
+      });
+
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${taxpayer.firstName}_${taxpayer.lastName}_odeme_gecmisi.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   if (isLoading) {
@@ -230,8 +337,12 @@ export default function TaxpayerDetailPage() {
 
             {/* Ödeme Geçmişi */}
             <div className="card">
-              <div className="card-header">
+              <div className="card-header flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-900">Ödeme Geçmişi</h2>
+                <div className="flex items-center space-x-2">
+                  <button className="btn btn-outline btn-sm" onClick={exportPaymentsAsCSV}>Excel</button>
+                  <button className="btn btn-outline btn-sm" onClick={exportPaymentsAsPDF}>PDF</button>
+                </div>
               </div>
               <div className="card-body">
                 {taxpayer.payments.length > 0 ? (
@@ -247,19 +358,74 @@ export default function TaxpayerDetailPage() {
                         </tr>
                       </thead>
                       <tbody className="table-body">
-                        {taxpayer.payments
-                          .sort((a, b) => b.year - a.year || b.month - a.month)
+                        {(() => {
+                          const list = [...taxpayer.payments];
+                          const now = new Date();
+                          const target = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                          const ty = target.getFullYear();
+                          const tm = target.getMonth() + 1;
+                          const hasPrev = list.some(p => p.year === ty && p.month === tm);
+                          if (!hasPrev) {
+                            list.push({
+                              id: `virtual-${taxpayer.id}-${ty}-${tm}`,
+                              year: ty,
+                              month: tm,
+                              amount: taxpayer.monthlyFee,
+                              paymentStatus: 'PENDING',
+                              paymentDate: undefined,
+                              notes: '',
+                            });
+                          }
+                          return list.sort((a,b)=> b.year - a.year || b.month - a.month);
+                        })()
                           .map((payment) => (
                             <tr key={payment.id} className="table-row">
                               <td className="table-cell">{payment.year}</td>
                               <td className="table-cell">{getMonthName(payment.month)}</td>
                               <td className="table-cell">
-                                ₺{payment.amount.toLocaleString('tr-TR')}
+                                ₺{Number(payment.amount || 0).toLocaleString('tr-TR')}
                               </td>
                               <td className="table-cell">
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(payment.paymentStatus)}`}>
-                                  {getPaymentStatusText(payment.paymentStatus)}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(payment.paymentStatus)}`}>
+                                    {getPaymentStatusText(payment.paymentStatus)}
+                                  </span>
+                                  {String(payment.paymentStatus || 'PENDING').toUpperCase() !== 'PAID' && (
+                                    <button
+                                      className="btn btn-outline btn-xs"
+                                      onClick={async () => {
+                                        try {
+                                          const token = localStorage.getItem('accessToken');
+                                          const isVirtual = payment.id.startsWith('virtual-');
+                                          const res = isVirtual
+                                            ? await fetch('/api/smmm/payments', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                                body: JSON.stringify({
+                                                  taxpayerId: taxpayer.id,
+                                                  year: payment.year,
+                                                  month: payment.month,
+                                                  amount: payment.amount,
+                                                  paymentStatus: 'PAID',
+                                                  paymentDate: new Date().toISOString().split('T')[0],
+                                                  notes: payment.notes || ''
+                                                })
+                                              })
+                                            : await fetch(`/api/smmm/payments/${payment.id}`, {
+                                                method: 'PUT',
+                                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                                body: JSON.stringify({ paymentStatus: 'PAID' })
+                                              });
+                                          if (res.ok) {
+                                            await loadTaxpayerDetail();
+                                          }
+                                        } catch (e) {}
+                                      }}
+                                    >
+                                      Ödendi İşaretle
+                                    </button>
+                                  )}
+                                </div>
                               </td>
                               <td className="table-cell">
                                 {payment.paymentDate 
@@ -275,6 +441,76 @@ export default function TaxpayerDetailPage() {
                 ) : (
                   <div className="text-center py-8">
                     <p className="text-gray-500">Henüz ödeme kaydı bulunmuyor.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Bekleyen Serbest Kalemler */}
+            <div className="card">
+              <div className="card-header">
+                <h2 className="text-lg font-semibold text-gray-900">Bekleyen Serbest Kalemler ({taxpayer.charges?.length || 0})</h2>
+              </div>
+              <div className="card-body p-0">
+                {!taxpayer.charges || taxpayer.charges.length === 0 ? (
+                  <div className="empty-state py-6">
+                    <h3 className="empty-state-title">Bekleyen kalem yok</h3>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="table text-sm">
+                      <thead className="table-header">
+                        <tr>
+                          <th className="table-header-cell px-3 py-2">Başlık</th>
+                          <th className="table-header-cell hidden md:table-cell px-3 py-2">Tip</th>
+                          <th className="table-header-cell px-3 py-2">Tutar</th>
+                          <th className="table-header-cell hidden sm:table-cell px-3 py-2">Vade</th>
+                          <th className="table-header-cell px-3 py-2">Durum</th>
+                          <th className="table-header-cell px-3 py-2">İşlem</th>
+                        </tr>
+                      </thead>
+                      <tbody className="table-body">
+                        {taxpayer.charges!.map((ch) => (
+                          <tr key={ch.id} className="table-row">
+                            <td className="table-cell px-3 py-2">{ch.title}</td>
+                            <td className="table-cell hidden md:table-cell px-3 py-2">{ch.type || '-'}</td>
+                            <td className="table-cell whitespace-nowrap px-3 py-2">₺{Number(ch.amount).toLocaleString('tr-TR')}</td>
+                            <td className="table-cell hidden sm:table-cell px-3 py-2">{ch.dueDate ? new Date(ch.dueDate).toLocaleDateString('tr-TR') : '-'}</td>
+                            <td className="table-cell px-3 py-2">
+                              {ch.status === 'PAID' ? (
+                                <span className="badge badge-success">Ödendi</span>
+                              ) : ch.status === 'CANCELLED' ? (
+                                <span className="badge badge-gray">İptal</span>
+                              ) : (
+                                <span className="badge badge-warning">Bekliyor</span>
+                              )}
+                            </td>
+                            <td className="table-cell px-3 py-2">
+                              {ch.status !== 'PAID' && (
+                                <button
+                                  className="btn btn-outline btn-sm whitespace-nowrap"
+                                  onClick={async () => {
+                                    try {
+                                      const token = localStorage.getItem('accessToken');
+                                      const res = await fetch(`/api/smmm/charges/${ch.id}`, {
+                                        method: 'PUT',
+                                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                        body: JSON.stringify({ status: 'PAID' })
+                                      });
+                                      if (res.ok) {
+                                        await loadTaxpayerDetail();
+                                      }
+                                    } catch (e) {}
+                                  }}
+                                >
+                                  Ödendi İşaretle
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>

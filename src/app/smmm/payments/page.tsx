@@ -58,10 +58,14 @@ export default function PaymentsPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filters, setFilters] = useState({
-    year: new Date().getFullYear(),
-    month: '',
-    status: '',
+  const [filters, setFilters] = useState(() => {
+    const now = new Date();
+    const target = new Date(now.getFullYear(), now.getMonth() - 1, 1); // bir önceki ay
+    return {
+      year: target.getFullYear(),
+      month: String(target.getMonth() + 1), // '1'..'12'
+      status: '',
+    };
   });
   const router = useRouter();
 

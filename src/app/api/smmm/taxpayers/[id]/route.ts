@@ -28,7 +28,7 @@ export async function GET(
 
     const taxpayerId = params.id;
 
-    // Get taxpayer with payments
+    // Get taxpayer with payments and pending charges
     const taxpayer = await prisma.taxpayer.findFirst({
       where: {
         id: taxpayerId,
@@ -40,6 +40,9 @@ export async function GET(
             { year: 'desc' },
             { month: 'desc' }
           ]
+        },
+        charges: {
+          orderBy: { createdAt: 'desc' }
         }
       }
     });

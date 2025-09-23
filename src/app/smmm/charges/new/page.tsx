@@ -22,7 +22,6 @@ export default function NewChargePage() {
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     taxpayerId: initialTaxpayerId,
-    title: '',
     type: '',
     amount: '0',
     dueDate: '',
@@ -57,7 +56,20 @@ export default function NewChargePage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    // Title-case for textual fields (tr-TR aware)
+    const toTitleCase = (text: string) =>
+      text
+        .split(' ')
+        .filter(Boolean)
+        .map(word => word.charAt(0).toLocaleUpperCase('tr-TR') + word.slice(1).toLocaleLowerCase('tr-TR'))
+        .join(' ');
+
+    let nextValue = value;
+    if (name === 'type' || name === 'notes') {
+      nextValue = toTitleCase(value);
+    }
+
+    setFormData(prev => ({ ...prev, [name]: nextValue }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,7 +83,7 @@ export default function NewChargePage() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           taxpayerId: formData.taxpayerId,
-          title: formData.title.trim(),
+          title: (formData.type || 'Genel Kalem').trim(),
           type: formData.type.trim() || undefined,
           amount: Number(formData.amount),
           dueDate: formData.dueDate || undefined,
@@ -147,13 +159,8 @@ export default function NewChargePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Başlık *</label>
-                  <input name="title" className="input" value={formData.title} onChange={handleChange} required />
-                </div>
-
-                <div>
                   <label className="block text-sm font-medium text-gray-700">Tip (opsiyonel)</label>
-                  <input name="type" className="input" value={formData.type} onChange={handleChange} placeholder="Örn: Ceza, Hizmet, Masraf" />
+                  <input name="type" className="input" value={formData.type} onChange={handleChange} placeholder="Örn: Defter Tasdik, Ceza, Hizmet, Masraf" />
                 </div>
 
                 <div>

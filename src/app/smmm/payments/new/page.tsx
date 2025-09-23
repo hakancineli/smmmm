@@ -18,13 +18,17 @@ export default function NewPaymentPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    year: new Date().getFullYear(),
-    month: new Date().getMonth() + 1,
+  const [formData, setFormData] = useState(() => {
+    const now = new Date();
+    const target = new Date(now.getFullYear(), now.getMonth() - 1, 1); // bir önceki ay
+    return {
+      year: target.getFullYear(),
+      month: target.getMonth() + 1,
     amount: '',
     paymentStatus: 'PENDING' as 'PENDING' | 'PAID' | 'OVERDUE',
     paymentDate: new Date().toISOString().split('T')[0],
     notes: '',
+    };
   });
 
   const router = useRouter();
@@ -59,11 +63,11 @@ export default function NewPaymentPage() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Taxpayer data:', data); // Debug için
-        setTaxpayer(data);
+        const t = data.taxpayer || data;
+        setTaxpayer(t);
         setFormData(prev => ({
           ...prev,
-          amount: data.monthlyFee ? data.monthlyFee.toString() : '0',
+          amount: t.monthlyFee ? t.monthlyFee.toString() : '0',
         }));
       } else {
         const errorData = await response.json();
