@@ -407,12 +407,7 @@ export default function SMMMDashboard() {
         {/* Mükellef Listesi */}
         <div className="card">
           <div className="card-header">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-gray-900">Mükellef Listesi</h2>
-              <Link href="/smmm/taxpayers" className="text-primary-600 hover:text-primary-500 text-sm font-medium">
-                Tümünü Gör
-              </Link>
-            </div>
+            <h2 className="text-lg font-semibold text-gray-900">Mükellef Listesi</h2>
           </div>
           <div className="card-body">
             {taxpayers.length === 0 ? (
