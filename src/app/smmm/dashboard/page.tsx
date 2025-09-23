@@ -504,13 +504,7 @@ export default function SMMMDashboard() {
                                 href={`/smmm/taxpayers/${taxpayer.id}`}
                                 className="text-primary-600 hover:text-primary-900"
                               >
-                                Detay
-                              </Link>
-                              <Link
-                                href={`/smmm/taxpayers/${taxpayer.id}/edit`}
-                                className="text-gray-600 hover:text-gray-900"
-                              >
-                                Düzenle
+                                İşlemler
                               </Link>
                             </div>
                           </td>
