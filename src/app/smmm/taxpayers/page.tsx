@@ -244,7 +244,7 @@ export default function TaxpayersPage() {
                 <table className="table">
                   <thead className="table-header">
                     <tr>
-                      <th className="table-header-cell">Ad Soyad</th>
+                      <th className="table-header-cell sticky left-0 z-10 bg-white">Ad Soyad</th>
                       <th className="table-header-cell hidden xl:table-cell">Şirket Ünvanı</th>
                       <th className="table-header-cell">TC No</th>
                       <th className="table-header-cell hidden xl:table-cell">Vergi No</th>
@@ -254,7 +254,7 @@ export default function TaxpayersPage() {
                       <th className="table-header-cell">Ödeme Durumu</th>
                       <th className="table-header-cell">Borç Bakiyesi</th>
                       <th className="table-header-cell hidden md:table-cell">Durum</th>
-                      <th className="table-header-cell">İşlemler</th>
+                      <th className="table-header-cell sticky right-0 z-10 bg-white">İşlemler</th>
                     </tr>
                   </thead>
                   <tbody className="table-body">
@@ -263,7 +263,7 @@ export default function TaxpayersPage() {
                       const debtBalance = getDebtBalance(taxpayer);
                       return (
                         <tr key={taxpayer.id} className="table-row">
-                          <td className="table-cell font-medium">
+                          <td className="table-cell font-medium sticky left-0 z-0 bg-white">
                             {taxpayer.firstName} {taxpayer.lastName}
                           </td>
                           <td className="table-cell hidden xl:table-cell">
@@ -304,7 +304,7 @@ export default function TaxpayersPage() {
                               {taxpayer.isActive ? 'Aktif' : 'Pasif'}
                             </span>
                           </td>
-                          <td className="table-cell">
+                          <td className="table-cell sticky right-0 z-0 bg-white">
                             <div className="flex space-x-2">
                               <Link
                                 href={`/smmm/taxpayers/${taxpayer.id}`}
