@@ -59,7 +59,7 @@ export default function EDevletCredentialsPage() {
     }
 
     loadCredentials();
-  }, [router, pagination.page, filters]);
+  }, [router, pagination.page, filters.platform, filters.taxpayerId]);
 
   const loadCredentials = async () => {
     try {
