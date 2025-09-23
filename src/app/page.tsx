@@ -43,15 +43,6 @@ export default function HomePage() {
               </svg>
               Ücretsiz Kayıt Ol
             </Link>
-            <Link 
-              href="/superuser/login" 
-              className="btn btn-outline text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              Yönetici Girişi
-            </Link>
           </div>
 
           {/* Öne Çıkan Özellikler */}
@@ -237,29 +228,11 @@ export default function HomePage() {
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             Sistem İstatistikleri
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-4xl mx-auto mb-12">
+          <div className="flex justify-center mb-12">
             <div className="card">
               <div className="card-body text-center">
-                <div className="text-3xl font-bold text-primary-600 mb-2">2+</div>
+                <div className="text-4xl font-bold text-primary-600 mb-2">300+</div>
                 <div className="text-gray-600">Aktif SMMM</div>
-              </div>
-            </div>
-            <div className="card">
-              <div className="card-body text-center">
-                <div className="text-3xl font-bold text-success-600 mb-2">3</div>
-                <div className="text-gray-600">Toplam Mükellef</div>
-              </div>
-            </div>
-            <div className="card">
-              <div className="card-body text-center">
-                <div className="text-3xl font-bold text-warning-600 mb-2">6</div>
-                <div className="text-gray-600">Ödeme Kaydı</div>
-              </div>
-            </div>
-            <div className="card">
-              <div className="card-body text-center">
-                <div className="text-3xl font-bold text-danger-600 mb-2">₺1,250</div>
-                <div className="text-gray-600">Toplam Gelir</div>
               </div>
             </div>
           </div>
@@ -353,17 +326,12 @@ export default function HomePage() {
                       SMMM Kayıt
                     </Link>
                   </li>
-                  <li>
-                    <Link href="/superuser/login" className="text-gray-400 hover:text-white">
-                      Yönetici Girişi
-                    </Link>
-                  </li>
                 </ul>
               </div>
               <div>
                 <h3 className="text-lg font-semibold mb-4">İletişim</h3>
                 <p className="text-gray-400">
-                  Domain: smmmmukellef.com.tr<br />
+                  Telefon: +90 554 581 20 34<br />
                   Email: info@smmmmukellef.com.tr
                 </p>
               </div>
