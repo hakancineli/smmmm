@@ -79,9 +79,6 @@ export default function SMMMLoginPage() {
               )}
 
               <div>
-                <label htmlFor="username" className="label">
-                  Kullanıcı Adı
-                </label>
                 <input
                   id="username"
                   name="username"
@@ -95,9 +92,6 @@ export default function SMMMLoginPage() {
               </div>
 
               <div>
-                <label htmlFor="password" className="label">
-                  Şifre
-                </label>
                 <input
                   id="password"
                   name="password"

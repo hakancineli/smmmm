@@ -61,20 +61,20 @@ export default function SMMMRegisterPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Kullanıcı Adı</label>
             <input
               type="text"
               required
+              placeholder="Kullanıcı adınızı girin"
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
               value={form.username}
               onChange={(e) => setForm({ ...form, username: e.target.value })}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Şifre</label>
             <input
               type="password"
               required
+              placeholder="Şifrenizi girin"
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
