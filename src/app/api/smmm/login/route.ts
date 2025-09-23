@@ -65,8 +65,7 @@ export async function POST(request: NextRequest) {
       isActive: smmmAccount.isActive,
       createdAt: smmmAccount.createdAt,
       updatedAt: smmmAccount.updatedAt,
-      superuserId: smmmAccount.superuserId,
-      passwordHash: smmmAccount.passwordHash
+      superuserId: smmmAccount.superuserId
     }, 'smmm');
 
     const response: LoginResponse = {

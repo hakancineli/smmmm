@@ -52,8 +52,7 @@ export async function POST(request: NextRequest) {
       phone: superuser.phone || undefined,
       isActive: superuser.isActive,
       createdAt: superuser.createdAt,
-      updatedAt: superuser.updatedAt,
-      passwordHash: superuser.passwordHash
+      updatedAt: superuser.updatedAt
     }, 'superuser');
 
     const response: LoginResponse = {
