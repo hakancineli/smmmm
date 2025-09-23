@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,75 +7,65 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Superuser tablosu - Geliştirici hesapları
 model Superuser {
-  id           String   @id @default(uuid())
-  username     String   @unique
-  passwordHash String   @map("password_hash")
-  email        String?  @unique
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-
-  // İlişkiler
+  id           String        @id @default(uuid())
+  username     String        @unique
+  passwordHash String        @map("password_hash")
+  email        String?       @unique
+  isActive     Boolean       @default(true) @map("is_active")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
   smmmAccounts SMMMAccount[]
 
   @@map("superusers")
 }
 
-// SMMM (Tenant) tablosu
 model SMMMAccount {
-  id              String   @id @default(uuid())
-  superuserId     String   @map("superuser_id")
-  companyName     String   @map("company_name")
-  username        String   @unique
-  passwordHash    String   @map("password_hash")
-  email           String?  @unique
-  phone           String?
-  address         String?
-  subscriptionPlan String? @map("subscription_plan")
-  isActive        Boolean  @default(true) @map("is_active")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-
-  // İlişkiler
-  superuser   Superuser    @relation(fields: [superuserId], references: [id], onDelete: Cascade)
-  taxpayers   Taxpayer[]
-  payments    Payment[]
-  charges     ChargeItem[]
-  credentials EDevletCredential[]
+  id               String              @id @default(uuid())
+  superuserId      String              @map("superuser_id")
+  companyName      String              @map("company_name")
+  username         String              @unique
+  passwordHash     String              @map("password_hash")
+  email            String?             @unique
+  phone            String?
+  address          String?
+  subscriptionPlan String?             @map("subscription_plan")
+  isActive         Boolean             @default(true) @map("is_active")
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+  charges          ChargeItem[]
+  credentials      EDevletCredential[]
+  payments         Payment[]
+  superuser        Superuser           @relation(fields: [superuserId], references: [id], onDelete: Cascade)
+  taxpayers        Taxpayer[]
 
   @@map("smmm_accounts")
 }
 
-// Mükellef tablosu
 model Taxpayer {
-  id          String   @id @default(uuid())
-  smmmId      String   @map("smmm_id")
-  tcNumber    String   @unique @map("tc_number")
-  taxNumber   String?  @map("tax_number")
-  firstName   String   @map("first_name")
-  lastName    String   @map("last_name")
-  companyName String?  @map("company_name")
+  id          String              @id @default(uuid())
+  smmmId      String              @map("smmm_id")
+  tcNumber    String              @unique @map("tc_number")
+  taxNumber   String?             @map("tax_number")
+  firstName   String              @map("first_name")
+  lastName    String              @map("last_name")
   email       String?
   phone       String?
   address     String?
-  monthlyFee  Decimal  @default(0) @map("monthly_fee") @db.Decimal(10, 2)
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  // İlişkiler
-  smmm        SMMMAccount        @relation(fields: [smmmId], references: [id], onDelete: Cascade)
-  payments    Payment[]
+  monthlyFee  Decimal             @default(0) @map("monthly_fee") @db.Decimal(10, 2)
+  isActive    Boolean             @default(true) @map("is_active")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+  companyName String?             @map("company_name")
   charges     ChargeItem[]
-  credentials EDevletCredential[]
   documents   Document[]
+  credentials EDevletCredential[]
+  payments    Payment[]
+  smmm        SMMMAccount         @relation(fields: [smmmId], references: [id], onDelete: Cascade)
 
   @@map("taxpayers")
 }
 
-// Aylık ödeme takibi
 model Payment {
   id            String        @id @default(uuid())
   taxpayerId    String        @map("taxpayer_id")
@@ -91,70 +78,78 @@ model Payment {
   notes         String?
   createdAt     DateTime      @default(now()) @map("created_at")
   updatedAt     DateTime      @updatedAt @map("updated_at")
-
-  // İlişkiler
-  taxpayer Taxpayer   @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
-  smmm     SMMMAccount @relation(fields: [smmmId], references: [id], onDelete: Cascade)
+  smmm          SMMMAccount   @relation(fields: [smmmId], references: [id], onDelete: Cascade)
+  taxpayer      Taxpayer      @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
 
   @@unique([taxpayerId, year, month])
   @@map("payments")
 }
 
-// E-Devlet şifreleri
 model EDevletCredential {
-  id           String   @id @default(uuid())
-  taxpayerId   String   @map("taxpayer_id")
-  smmmId       String   @map("smmm_id")
-  platform     Platform
-  username     String?
-  passwordEncrypted String @map("password_encrypted")
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-
-  // İlişkiler
-  taxpayer Taxpayer   @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
-  smmm     SMMMAccount @relation(fields: [smmmId], references: [id], onDelete: Cascade)
+  id                String      @id @default(uuid())
+  taxpayerId        String      @map("taxpayer_id")
+  smmmId            String      @map("smmm_id")
+  platform          Platform
+  username          String?
+  passwordEncrypted String      @map("password_encrypted")
+  isActive          Boolean     @default(true) @map("is_active")
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+  smmm              SMMMAccount @relation(fields: [smmmId], references: [id], onDelete: Cascade)
+  taxpayer          Taxpayer    @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
 
   @@unique([taxpayerId, platform])
   @@map("edevlet_credentials")
 }
 
-// Doküman yönetimi
 model Document {
-  id          String   @id @default(uuid())
-  taxpayerId  String   @map("taxpayer_id")
-  title       String
-  description String?
-  filePath    String   @map("file_path")
-  fileType    String   @map("file_type")
-  fileSize    Int      @map("file_size")
+  id           String       @id @default(uuid())
+  taxpayerId   String       @map("taxpayer_id")
+  title        String
+  description  String?
+  filePath     String       @map("file_path")
+  fileType     String       @map("file_type")
+  fileSize     Int          @map("file_size")
   documentType DocumentType @map("document_type")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  // İlişkiler
-  taxpayer Taxpayer @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  taxpayer     Taxpayer     @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
 
   @@map("documents")
 }
 
-// WhatsApp mesaj geçmişi
 model WhatsAppMessage {
-  id          String   @id @default(uuid())
-  taxpayerId  String   @map("taxpayer_id")
-  smmmId      String   @map("smmm_id")
-  messageType MessageType @map("message_type")
+  id          String        @id @default(uuid())
+  taxpayerId  String        @map("taxpayer_id")
+  smmmId      String        @map("smmm_id")
+  messageType MessageType   @map("message_type")
   content     String
-  filePath    String?  @map("file_path")
+  filePath    String?       @map("file_path")
   status      MessageStatus @default(PENDING)
-  sentAt      DateTime? @map("sent_at")
-  createdAt   DateTime @default(now()) @map("created_at")
+  sentAt      DateTime?     @map("sent_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
 
   @@map("whatsapp_messages")
 }
 
-// Enums
+model ChargeItem {
+  id         String       @id @default(uuid())
+  taxpayerId String       @map("taxpayer_id")
+  smmmId     String       @map("smmm_id")
+  title      String
+  type       String?
+  amount     Decimal      @db.Decimal(10, 2)
+  status     ChargeStatus @default(PENDING)
+  dueDate    DateTime?    @map("due_date")
+  notes      String?
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+  smmm       SMMMAccount  @relation(fields: [smmmId], references: [id], onDelete: Cascade)
+  taxpayer   Taxpayer     @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
+
+  @@map("charge_items")
+}
+
 enum PaymentStatus {
   PENDING
   PAID
@@ -186,27 +181,6 @@ enum MessageStatus {
   SENT
   DELIVERED
   FAILED
-}
-
-// Serbest kalem/ek borç kalemleri
-model ChargeItem {
-  id         String   @id @default(uuid())
-  taxpayerId String   @map("taxpayer_id")
-  smmmId     String   @map("smmm_id")
-  title      String
-  type       String?
-  amount     Decimal  @db.Decimal(10, 2)
-  status     ChargeStatus @default(PENDING)
-  dueDate    DateTime? @map("due_date")
-  notes      String?
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-
-  // İlişkiler
-  taxpayer Taxpayer   @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
-  smmm     SMMMAccount @relation(fields: [smmmId], references: [id], onDelete: Cascade)
-
-  @@map("charge_items")
 }
 
 enum ChargeStatus {

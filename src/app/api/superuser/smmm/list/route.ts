@@ -35,10 +35,8 @@ export async function GET(request: NextRequest) {
     // Pagination
     const skip = (page - 1) * limit;
 
-    // Build where clause
-    const where: any = {
-      superuserId: payload.id,
-    };
+    // Build where clause - Show all SMMM accounts for superuser dashboard
+    const where: any = {};
 
     if (search) {
       where.OR = [
