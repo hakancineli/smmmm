@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
 interface Taxpayer {
   id: string;
@@ -156,6 +157,192 @@ export default function TaxpayersPage() {
     return { totalDebt, unpaidMonths, hasDebt: totalDebt > 0 };
   };
 
+  // Türkçe karakterleri normalize et
+  const normalize = (text: string) => {
+    return text
+      .replace(/Ş/g, 'S').replace(/ş/g, 's')
+      .replace(/İ/g, 'I').replace(/ı/g, 'i')
+      .replace(/Ç/g, 'C').replace(/ç/g, 'c')
+      .replace(/Ğ/g, 'G').replace(/ğ/g, 'g')
+      .replace(/Ö/g, 'O').replace(/ö/g, 'o')
+      .replace(/Ü/g, 'U').replace(/ü/g, 'u')
+      .replace(/₺/g, 'TL ');
+  };
+
+  const exportToExcel = () => {
+    const headers = [
+      'Ad Soyad',
+      'Şirket Ünvanı',
+      'TC No',
+      'Vergi No',
+      'E-posta',
+      'Telefon',
+      'Aylık Ücret',
+      'Ödeme Durumu',
+      'Borç Bakiyesi',
+      'Durum'
+    ];
+
+    const csvContent = [
+      headers.join(','),
+      ...taxpayers.map(taxpayer => {
+        const paymentStatus = getPaymentStatus(taxpayer);
+        const debtBalance = getDebtBalance(taxpayer);
+        
+        return [
+          `"${taxpayer.firstName} ${taxpayer.lastName}"`,
+          `"${taxpayer.companyName || ''}"`,
+          taxpayer.tcNumber,
+          `"${taxpayer.taxNumber || ''}"`,
+          `"${taxpayer.email || ''}"`,
+          `"${taxpayer.phone || ''}"`,
+          taxpayer.monthlyFee,
+          `"${paymentStatus.text}"`,
+          debtBalance.hasDebt ? debtBalance.totalDebt : 0,
+          `"${taxpayer.isActive ? 'Aktif' : 'Pasif'}"`
+        ].join(',');
+      })
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `mukellef-listesi-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToPDF = async () => {
+    try {
+      const pdfDoc = await PDFDocument.create();
+      const page = pdfDoc.addPage([595.28, 841.89]); // A4 size
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+      const { width, height } = page.getSize();
+      const margin = 50;
+      const tableWidth = width - (margin * 2);
+      const rowHeight = 20;
+      const headerHeight = 25;
+
+      // Başlık
+      page.drawText('Mükellef Listesi', {
+        x: margin,
+        y: height - margin - 20,
+        size: 16,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+
+      // Tarih
+      page.drawText(`Tarih: ${new Date().toLocaleDateString('tr-TR')}`, {
+        x: margin,
+        y: height - margin - 40,
+        size: 10,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+
+      // Tablo başlıkları
+      const headers = [
+        'Ad Soyad',
+        'TC No',
+        'Şirket',
+        'E-posta',
+        'Aylık Ücret',
+        'Durum'
+      ];
+
+      const colWidths = [120, 80, 100, 120, 80, 60];
+      let currentX = margin;
+
+      // Header row
+      headers.forEach((header, index) => {
+        page.drawRectangle({
+          x: currentX,
+          y: height - margin - 60 - headerHeight,
+          width: colWidths[index],
+          height: headerHeight,
+          borderColor: rgb(0, 0, 0),
+          borderWidth: 0.5,
+        });
+
+        page.drawText(normalize(header), {
+          x: currentX + 5,
+          y: height - margin - 60 - headerHeight + 5,
+          size: 8,
+          font: boldFont,
+          color: rgb(0, 0, 0),
+        });
+
+        currentX += colWidths[index];
+      });
+
+      // Data rows
+      let currentY = height - margin - 60 - headerHeight;
+      taxpayers.slice(0, 30).forEach((taxpayer, rowIndex) => { // İlk 30 kayıt
+        if (currentY < margin + 50) {
+          // Yeni sayfa ekle
+          const newPage = pdfDoc.addPage([595.28, 841.89]);
+          currentY = newPage.getSize().height - margin - 20;
+        }
+
+        const paymentStatus = getPaymentStatus(taxpayer);
+        const debtBalance = getDebtBalance(taxpayer);
+        
+        const rowData = [
+          `${taxpayer.firstName} ${taxpayer.lastName}`,
+          taxpayer.tcNumber,
+          taxpayer.companyName || '-',
+          taxpayer.email || '-',
+          `TL ${taxpayer.monthlyFee.toLocaleString('tr-TR')}`,
+          paymentStatus.text
+        ];
+
+        currentX = margin;
+        rowData.forEach((data, colIndex) => {
+          page.drawRectangle({
+            x: currentX,
+            y: currentY - rowHeight,
+            width: colWidths[colIndex],
+            height: rowHeight,
+            borderColor: rgb(0, 0, 0),
+            borderWidth: 0.5,
+          });
+
+          page.drawText(normalize(data), {
+            x: currentX + 5,
+            y: currentY - rowHeight + 5,
+            size: 7,
+            font: font,
+            color: rgb(0, 0, 0),
+          });
+
+          currentX += colWidths[colIndex];
+        });
+
+        currentY -= rowHeight;
+      });
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `mukellef-listesi-${new Date().toISOString().split('T')[0]}.pdf`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('PDF export error:', error);
+      alert('PDF oluşturulurken hata oluştu');
+    }
+  };
+
   if (isLoading && taxpayers.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -175,6 +362,26 @@ export default function TaxpayersPage() {
               <p className="text-sm text-gray-600">Mükellef listesi ve yönetimi</p>
             </div>
             <div className="flex items-center space-x-4">
+              <button
+                onClick={exportToExcel}
+                className="btn btn-outline"
+                disabled={taxpayers.length === 0}
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Excel
+              </button>
+              <button
+                onClick={exportToPDF}
+                className="btn btn-outline"
+                disabled={taxpayers.length === 0}
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                PDF
+              </button>
               <Link href="/smmm/dashboard" className="btn btn-outline">
                 Dashboard
               </Link>

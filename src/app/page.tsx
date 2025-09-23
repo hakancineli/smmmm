@@ -24,6 +24,15 @@ export default function HomePage() {
               SMMM Girişi
             </Link>
             <Link 
+              href="/smmm/register" 
+              className="btn btn-success text-lg px-8 py-3"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+              </svg>
+              SMMM Kayıt
+            </Link>
+            <Link 
               href="/superuser/login" 
               className="btn btn-outline text-lg px-8 py-3"
             >
@@ -279,6 +288,11 @@ export default function HomePage() {
                   <li>
                     <Link href="/smmm/login" className="text-gray-400 hover:text-white">
                       SMMM Girişi
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/smmm/register" className="text-gray-400 hover:text-white">
+                      SMMM Kayıt
                     </Link>
                   </li>
                   <li>
