@@ -131,12 +131,16 @@ export function validateTaxNumber(taxNumber: string): boolean {
 
   const digits = taxNumber.split('').map(Number);
   
-  // Vergi numarası algoritması
+  // Vergi numarası algoritması (Türkiye)
   let sum = 0;
   for (let i = 0; i < 9; i++) {
     sum += digits[i] * (10 - i);
   }
   
-  const checkDigit = (sum % 11) % 10;
-  return checkDigit === digits[9];
+  const checkDigit = (sum % 11);
+  if (checkDigit < 2) {
+    return checkDigit === digits[9];
+  } else {
+    return (11 - checkDigit) === digits[9];
+  }
 }
