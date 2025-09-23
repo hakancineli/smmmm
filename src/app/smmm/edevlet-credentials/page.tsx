@@ -59,7 +59,16 @@ export default function EDevletCredentialsPage() {
     }
 
     loadCredentials();
-  }, [router, pagination.page, filters.platform, filters.taxpayerId]);
+  }, [router]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    const userType = localStorage.getItem('userType');
+    
+    if (token && userType === 'smmm') {
+      loadCredentials();
+    }
+  }, [pagination.page, filters.platform, filters.taxpayerId]);
 
   const loadCredentials = async () => {
     try {
