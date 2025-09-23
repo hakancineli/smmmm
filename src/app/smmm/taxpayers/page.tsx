@@ -245,15 +245,15 @@ export default function TaxpayersPage() {
                   <thead className="table-header">
                     <tr>
                       <th className="table-header-cell sticky left-0 z-10 bg-white">Ad Soyad</th>
-                      <th className="table-header-cell hidden xl:table-cell">Şirket Ünvanı</th>
+                      <th className="table-header-cell">Şirket Ünvanı</th>
                       <th className="table-header-cell">TC No</th>
-                      <th className="table-header-cell hidden xl:table-cell">Vergi No</th>
-                      <th className="table-header-cell hidden lg:table-cell">E-posta</th>
-                      <th className="table-header-cell hidden lg:table-cell">Telefon</th>
+                      <th className="table-header-cell">Vergi No</th>
+                      <th className="table-header-cell">E-posta</th>
+                      <th className="table-header-cell">Telefon</th>
                       <th className="table-header-cell">Aylık Ücret</th>
                       <th className="table-header-cell">Ödeme Durumu</th>
                       <th className="table-header-cell">Borç Bakiyesi</th>
-                      <th className="table-header-cell hidden md:table-cell">Durum</th>
+                      <th className="table-header-cell">Durum</th>
                       <th className="table-header-cell sticky right-0 z-10 bg-white">İşlemler</th>
                     </tr>
                   </thead>
@@ -266,13 +266,13 @@ export default function TaxpayersPage() {
                           <td className="table-cell font-medium sticky left-0 z-0 bg-white">
                             {taxpayer.firstName} {taxpayer.lastName}
                           </td>
-                          <td className="table-cell hidden xl:table-cell">
+                          <td className="table-cell">
                             {taxpayer.companyName || '-'}
                           </td>
                           <td className="table-cell">{taxpayer.tcNumber}</td>
-                          <td className="table-cell hidden xl:table-cell">{taxpayer.taxNumber || '-'}</td>
-                          <td className="table-cell hidden lg:table-cell">{taxpayer.email || '-'}</td>
-                          <td className="table-cell hidden lg:table-cell">{taxpayer.phone || '-'}</td>
+                          <td className="table-cell">{taxpayer.taxNumber || '-'}</td>
+                          <td className="table-cell">{taxpayer.email || '-'}</td>
+                          <td className="table-cell">{taxpayer.phone || '-'}</td>
                           <td className="table-cell">
                             ₺{taxpayer.monthlyFee.toLocaleString('tr-TR')}
                           </td>
@@ -299,7 +299,7 @@ export default function TaxpayersPage() {
                               <span className="text-green-600 font-medium">Temiz</span>
                             )}
                           </td>
-                          <td className="table-cell hidden md:table-cell">
+                          <td className="table-cell">
                             <span className={`badge ${taxpayer.isActive ? 'badge-success' : 'badge-danger'}`}>
                               {taxpayer.isActive ? 'Aktif' : 'Pasif'}
                             </span>
