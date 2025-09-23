@@ -164,6 +164,8 @@ export interface CreatePaymentRequest {
   year: number;
   month: number;
   amount: number;
+  paymentStatus?: PaymentStatus;
+  paymentDate?: string;
   notes?: string;
 }
 
