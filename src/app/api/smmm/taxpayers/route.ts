@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
 
     // Tax Number uniqueness check (if provided)
     if (taxNumber) {
-      const existingTaxNumber = await prisma.taxpayer.findUnique({
+      const existingTaxNumber = await prisma.taxpayer.findFirst({
         where: { taxNumber },
       });
 
