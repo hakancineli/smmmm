@@ -218,8 +218,7 @@ export default function TaxpayerDetailPage() {
       });
 
     const pdfBytes = await pdfDoc.save();
-    const arrayBuffer = pdfBytes.buffer.slice(pdfBytes.byteOffset, pdfBytes.byteOffset + pdfBytes.byteLength);
-    const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
