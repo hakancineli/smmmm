@@ -54,7 +54,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Token oluştur
-    const tokens = generateTokenPair(smmmAccount, 'smmm');
+    const tokens = generateTokenPair({
+      id: smmmAccount.id,
+      username: smmmAccount.username,
+      email: smmmAccount.email || undefined,
+      phone: smmmAccount.phone || undefined,
+      address: smmmAccount.address || undefined,
+      companyName: smmmAccount.companyName || undefined,
+      subscriptionPlan: smmmAccount.subscriptionPlan || undefined,
+      isActive: smmmAccount.isActive,
+      createdAt: smmmAccount.createdAt,
+      updatedAt: smmmAccount.updatedAt,
+      superuserId: smmmAccount.superuserId,
+      passwordHash: smmmAccount.passwordHash
+    }, 'smmm');
 
     const response: LoginResponse = {
       token: tokens.accessToken,

@@ -45,7 +45,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Token oluştur
-    const tokens = generateTokenPair(superuser, 'superuser');
+    const tokens = generateTokenPair({
+      id: superuser.id,
+      username: superuser.username,
+      email: superuser.email || undefined,
+      phone: superuser.phone || undefined,
+      isActive: superuser.isActive,
+      createdAt: superuser.createdAt,
+      updatedAt: superuser.updatedAt,
+      passwordHash: superuser.passwordHash
+    }, 'superuser');
 
     const response: LoginResponse = {
       token: tokens.accessToken,
