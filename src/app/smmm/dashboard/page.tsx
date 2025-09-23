@@ -186,7 +186,8 @@ export default function SMMMDashboard() {
   };
 
   const getDebtSummary = (taxpayer: Taxpayer) => {
-    if (!taxpayer.payments || taxpayer.payments.length === 0) {
+    const payments = (taxpayer as any).payments || (taxpayer as any).monthlyPayments || [];
+    if (!payments || payments.length === 0) {
       return { total: 0, unpaid: 0 };
     }
 
@@ -197,18 +198,18 @@ export default function SMMMDashboard() {
     let unpaid = 0;
 
     for (let month = 1; month <= currentMonth; month++) {
-      const payment = taxpayer.payments.find(
+      const payment = payments.find(
         p => p.year === currentYear && p.month === month
       );
       
       if (payment) {
-        total += payment.amount;
+        total += Number(payment.amount || 0);
         if (payment.paymentStatus !== 'PAID') {
-          unpaid += payment.amount;
+          unpaid += Number(payment.amount || 0);
         }
       } else {
-        total += taxpayer.monthlyFee;
-        unpaid += taxpayer.monthlyFee;
+        total += Number((taxpayer as any).monthlyFee || 0);
+        unpaid += Number((taxpayer as any).monthlyFee || 0);
       }
     }
 

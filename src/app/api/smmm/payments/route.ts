@@ -119,10 +119,20 @@ export async function POST(request: NextRequest) {
     const body: CreatePaymentRequest = await request.json();
     const { taxpayerId, year, month, amount, paymentStatus, paymentDate, notes } = body;
 
+    // Ensure numeric amount
+    const numericAmount = Number(amount);
+
     // Input validation
     if (!taxpayerId || !year || !month || amount === undefined) {
       return NextResponse.json(
         { error: 'Mükellef ID, yıl, ay ve tutar gereklidir' },
+        { status: 400 }
+      );
+    }
+
+    if (!Number.isFinite(numericAmount) || numericAmount < 0) {
+      return NextResponse.json(
+        { error: 'Geçersiz tutar' },
         { status: 400 }
       );
     }
@@ -182,7 +192,7 @@ export async function POST(request: NextRequest) {
         smmmId: payload.id,
         year,
         month,
-        amount,
+        amount: numericAmount,
         paymentStatus: paymentStatus || PaymentStatus.PENDING,
         paymentDate: paymentStatus === 'PAID' ? new Date(paymentDate || new Date()) : null,
         notes,
