@@ -24,6 +24,11 @@ export async function GET(request: NextRequest) {
     const charges = await prisma.chargeItem.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      include: {
+        taxpayer: {
+          select: { id: true, firstName: true, lastName: true, tcNumber: true }
+        }
+      }
     });
     return NextResponse.json({ data: charges });
   } catch (error) {

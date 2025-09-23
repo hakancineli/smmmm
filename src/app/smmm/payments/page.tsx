@@ -34,8 +34,20 @@ interface PaginatedResponse {
   };
 }
 
+interface ChargeItem {
+  id: string;
+  title: string;
+  type?: string;
+  amount: number;
+  status: string;
+  dueDate?: string;
+  createdAt: string;
+  taxpayer: { id: string; firstName: string; lastName: string; tcNumber: string };
+}
+
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [charges, setCharges] = useState<ChargeItem[]>([]);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -88,6 +100,12 @@ export default function PaymentsPage() {
         const data: PaginatedResponse = await response.json();
         setPayments(data.data);
         setPagination(data.pagination);
+        // fetch pending charges for context
+        const chargesRes = await fetch(`/api/smmm/charges?status=PENDING`, { headers: { 'Authorization': `Bearer ${token}` } });
+        if (chargesRes.ok) {
+          const c = await chargesRes.json();
+          setCharges(c.data || []);
+        }
       } else {
         setError('Ödemeler yüklenemedi');
       }
@@ -320,6 +338,49 @@ export default function PaymentsPage() {
                             </Link>
                           </div>
                         </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Pending Charge Items */}
+        <div className="card mt-6">
+          <div className="card-header">
+            <h2 className="text-lg font-semibold text-gray-900">Bekleyen Serbest Kalemler ({charges.length})</h2>
+          </div>
+          <div className="card-body p-0">
+            {charges.length === 0 ? (
+              <div className="empty-state py-8">
+                <h3 className="empty-state-title">Bekleyen serbest kalem yok</h3>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="table">
+                  <thead className="table-header">
+                    <tr>
+                      <th className="table-header-cell">Mükellef</th>
+                      <th className="table-header-cell">TC No</th>
+                      <th className="table-header-cell">Başlık</th>
+                      <th className="table-header-cell">Tip</th>
+                      <th className="table-header-cell">Tutar</th>
+                      <th className="table-header-cell">Vade</th>
+                    </tr>
+                  </thead>
+                  <tbody className="table-body">
+                    {charges.map((ch) => (
+                      <tr key={ch.id} className="table-row">
+                        <td className="table-cell font-medium">
+                          {ch.taxpayer.firstName} {ch.taxpayer.lastName}
+                        </td>
+                        <td className="table-cell">{ch.taxpayer.tcNumber}</td>
+                        <td className="table-cell">{ch.title}</td>
+                        <td className="table-cell">{ch.type || '-'}</td>
+                        <td className="table-cell">₺{Number(ch.amount).toLocaleString('tr-TR')}</td>
+                        <td className="table-cell">{ch.dueDate ? new Date(ch.dueDate).toLocaleDateString('tr-TR') : '-'}</td>
                       </tr>
                     ))}
                   </tbody>
