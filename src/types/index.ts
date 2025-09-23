@@ -11,7 +11,7 @@ export interface Superuser {
 export interface SMMMAccount {
   id: string;
   superuserId: string;
-  companyName: string;
+  companyName?: string;
   username: string;
   email?: string;
   phone?: string;
