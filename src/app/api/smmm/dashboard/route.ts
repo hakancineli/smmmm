@@ -3,6 +3,8 @@ import { prisma } from '@/lib/database';
 import { getTokenFromHeader, verifyAccessToken } from '@/lib/auth';
 import { DashboardStats, PaymentChartData } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     // SMMM authentication

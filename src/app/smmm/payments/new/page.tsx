@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -13,7 +13,7 @@ interface Taxpayer {
   monthlyFee: number;
 }
 
-export default function NewPaymentPage() {
+function NewPaymentForm() {
   const [taxpayer, setTaxpayer] = useState<Taxpayer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -303,5 +303,15 @@ export default function NewPaymentPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function NewPaymentPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="loading-spinner"></div>
+    </div>}>
+      <NewPaymentForm />
+    </Suspense>
   );
 }

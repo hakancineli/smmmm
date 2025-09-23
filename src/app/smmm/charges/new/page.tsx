@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -11,7 +11,7 @@ interface TaxpayerOption {
   companyName?: string;
 }
 
-export default function NewChargePage() {
+function NewChargeForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialTaxpayerId = searchParams.get('taxpayerId') || '';
@@ -190,6 +190,16 @@ export default function NewChargePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function NewChargePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="loading-spinner"></div>
+    </div>}>
+      <NewChargeForm />
+    </Suspense>
   );
 }
 
