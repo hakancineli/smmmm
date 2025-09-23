@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body: CreatePaymentRequest = await request.json();
-    const { taxpayerId, year, month, amount, notes } = body;
+    const { taxpayerId, year, month, amount, paymentStatus, paymentDate, notes } = body;
 
     // Input validation
     if (!taxpayerId || !year || !month || amount === undefined) {
@@ -183,7 +183,8 @@ export async function POST(request: NextRequest) {
         year,
         month,
         amount,
-        paymentStatus: PaymentStatus.PENDING,
+        paymentStatus: paymentStatus || PaymentStatus.PENDING,
+        paymentDate: paymentStatus === 'PAID' ? new Date(paymentDate || new Date()) : null,
         notes,
       },
       include: {

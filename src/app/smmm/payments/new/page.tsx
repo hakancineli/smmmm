@@ -59,13 +59,16 @@ export default function NewPaymentPage() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Taxpayer data:', data); // Debug için
         setTaxpayer(data);
         setFormData(prev => ({
           ...prev,
-          amount: data.monthlyFee.toString(),
+          amount: data.monthlyFee ? data.monthlyFee.toString() : '0',
         }));
       } else {
-        setError('Mükellef bilgileri yüklenemedi');
+        const errorData = await response.json();
+        console.error('API Error:', errorData);
+        setError('Mükellef bilgileri yüklenemedi: ' + (errorData.error || 'Bilinmeyen hata'));
       }
     } catch (error) {
       setError('Sunucu hatası');
