@@ -49,7 +49,6 @@ export async function POST(request: NextRequest) {
       id: superuser.id,
       username: superuser.username,
       email: superuser.email || undefined,
-      phone: superuser.phone || undefined,
       isActive: superuser.isActive,
       createdAt: superuser.createdAt,
       updatedAt: superuser.updatedAt

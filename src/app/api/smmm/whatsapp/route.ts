@@ -217,27 +217,9 @@ export async function GET(request: NextRequest) {
       where.status = status;
     }
 
-    // Get WhatsApp messages with pagination
-    const [messages, total] = await Promise.all([
-      prisma.whatsAppMessage.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          taxpayer: {
-            select: {
-              id: true,
-              tcNumber: true,
-              firstName: true,
-              lastName: true,
-              phone: true,
-            }
-          }
-        },
-      }),
-      prisma.whatsAppMessage.count({ where }),
-    ]);
+    // TODO: Implement WhatsApp message listing when schema is ready
+    const messages: any[] = [];
+    const total = 0;
 
     return NextResponse.json({
       data: messages,

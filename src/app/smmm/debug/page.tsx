@@ -44,7 +44,7 @@ export default function DebugPage() {
         data: data,
       });
     } catch (error) {
-      setApiTest({ error: error.message });
+      setApiTest({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   };
 
