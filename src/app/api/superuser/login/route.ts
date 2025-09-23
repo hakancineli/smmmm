@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       user: {
         id: superuser.id,
         username: superuser.username,
-        email: superuser.email,
+        email: superuser.email || undefined,
         isActive: superuser.isActive,
         createdAt: superuser.createdAt,
         updatedAt: superuser.updatedAt,
