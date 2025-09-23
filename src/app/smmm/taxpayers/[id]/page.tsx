@@ -336,6 +336,15 @@ export default function TaxpayerDetailPage() {
                   Ödeme Kaydet
                 </Link>
                 <Link 
+                  href={`/smmm/charges/new?taxpayerId=${taxpayer.id}`}
+                  className="btn btn-outline w-full"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18" />
+                  </svg>
+                  Yeni Kalem
+                </Link>
+                <Link 
                   href={`/smmm/edevlet-credentials?taxpayerId=${taxpayer.id}`}
                   className="btn btn-outline w-full"
                 >
