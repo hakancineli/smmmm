@@ -22,9 +22,33 @@ interface PaymentChartData {
   overdue: number;
 }
 
+interface Taxpayer {
+  id: string;
+  tcNumber: string;
+  taxNumber?: string;
+  firstName: string;
+  lastName: string;
+  companyName?: string;
+  email?: string;
+  phone?: string;
+  monthlyFee: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  payments?: {
+    id: string;
+    year: number;
+    month: number;
+    amount: number;
+    paymentStatus: string;
+    paymentDate?: string;
+  }[];
+}
+
 export default function SMMMDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [chartData, setChartData] = useState<PaymentChartData[]>([]);
+  const [taxpayers, setTaxpayers] = useState<Taxpayer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -41,6 +65,7 @@ export default function SMMMDashboard() {
 
     // Load dashboard data
     loadDashboardData();
+    loadTaxpayers();
   }, [router]);
 
   const loadDashboardData = async () => {
@@ -112,6 +137,82 @@ export default function SMMMDashboard() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const loadTaxpayers = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
+      const response = await fetch('/api/smmm/taxpayers?page=1&limit=10', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTaxpayers(data.data || []);
+      }
+    } catch (error) {
+      console.error('Load taxpayers error:', error);
+    }
+  };
+
+  const getPaymentStatus = (taxpayer: Taxpayer) => {
+    if (!taxpayer.payments || taxpayer.payments.length === 0) {
+      return { status: 'PENDING', color: 'warning' };
+    }
+
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+    
+    const currentPayment = taxpayer.payments.find(
+      p => p.year === currentYear && p.month === currentMonth
+    );
+
+    if (!currentPayment) {
+      return { status: 'PENDING', color: 'warning' };
+    }
+
+    switch (currentPayment.paymentStatus) {
+      case 'PAID':
+        return { status: 'Ödendi', color: 'success' };
+      case 'OVERDUE':
+        return { status: 'Gecikti', color: 'danger' };
+      default:
+        return { status: 'Bekliyor', color: 'warning' };
+    }
+  };
+
+  const getDebtSummary = (taxpayer: Taxpayer) => {
+    if (!taxpayer.payments || taxpayer.payments.length === 0) {
+      return { total: 0, unpaid: 0 };
+    }
+
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+    
+    let total = 0;
+    let unpaid = 0;
+
+    for (let month = 1; month <= currentMonth; month++) {
+      const payment = taxpayer.payments.find(
+        p => p.year === currentYear && p.month === month
+      );
+      
+      if (payment) {
+        total += payment.amount;
+        if (payment.paymentStatus !== 'PAID') {
+          unpaid += payment.amount;
+        }
+      } else {
+        total += taxpayer.monthlyFee;
+        unpaid += taxpayer.monthlyFee;
+      }
+    }
+
+    return { total, unpaid };
   };
 
   const handleLogout = () => {
@@ -302,28 +403,128 @@ export default function SMMMDashboard() {
           </div>
         </div>
 
-        {/* Recent Payments */}
+        {/* Mükellef Listesi */}
         <div className="card">
           <div className="card-header">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-gray-900">Son Ödemeler</h2>
-              <Link href="/smmm/payments" className="text-primary-600 hover:text-primary-500 text-sm font-medium">
+              <h2 className="text-lg font-semibold text-gray-900">Mükellef Listesi</h2>
+              <Link href="/smmm/taxpayers" className="text-primary-600 hover:text-primary-500 text-sm font-medium">
                 Tümünü Gör
               </Link>
             </div>
           </div>
           <div className="card-body">
-            <div className="empty-state py-8">
-              <div className="empty-state-icon">
-                <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
+            {taxpayers.length === 0 ? (
+              <div className="empty-state py-8">
+                <div className="empty-state-icon">
+                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <h3 className="empty-state-title">Henüz mükellef yok</h3>
+                <p className="empty-state-description">
+                  İlk mükellefinizi eklemek için yukarıdaki butona tıklayın.
+                </p>
               </div>
-              <h3 className="empty-state-title">Henüz ödeme kaydı yok</h3>
-              <p className="empty-state-description">
-                İlk ödeme kaydınızı oluşturmak için yukarıdaki butona tıklayın.
-              </p>
-            </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Mükellef
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        TC No
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Aylık Ücret
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Durum
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Borç
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        İşlemler
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {taxpayers.map((taxpayer) => {
+                      const paymentStatus = getPaymentStatus(taxpayer);
+                      const debtSummary = getDebtSummary(taxpayer);
+                      
+                      return (
+                        <tr key={taxpayer.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 h-10 w-10">
+                                <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
+                                  <span className="text-sm font-medium text-primary-600">
+                                    {taxpayer.firstName.charAt(0)}{taxpayer.lastName.charAt(0)}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {taxpayer.firstName} {taxpayer.lastName}
+                                </div>
+                                {taxpayer.companyName && (
+                                  <div className="text-sm text-gray-500">
+                                    {taxpayer.companyName}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {taxpayer.tcNumber}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ₺{taxpayer.monthlyFee.toLocaleString('tr-TR')}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              paymentStatus.color === 'success' 
+                                ? 'bg-success-100 text-success-800'
+                                : paymentStatus.color === 'danger'
+                                ? 'bg-danger-100 text-danger-800'
+                                : 'bg-warning-100 text-warning-800'
+                            }`}>
+                              {paymentStatus.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div>
+                              <div className="font-medium">₺{debtSummary.unpaid.toLocaleString('tr-TR')}</div>
+                              <div className="text-xs text-gray-500">Toplam: ₺{debtSummary.total.toLocaleString('tr-TR')}</div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <Link
+                                href={`/smmm/taxpayers/${taxpayer.id}`}
+                                className="text-primary-600 hover:text-primary-900"
+                              >
+                                Detay
+                              </Link>
+                              <Link
+                                href={`/smmm/taxpayers/${taxpayer.id}/edit`}
+                                className="text-gray-600 hover:text-gray-900"
+                              >
+                                Düzenle
+                              </Link>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </div>
