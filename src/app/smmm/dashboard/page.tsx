@@ -187,9 +187,7 @@ export default function SMMMDashboard() {
 
   const getDebtSummary = (taxpayer: Taxpayer) => {
     const payments = (taxpayer as any).payments || (taxpayer as any).monthlyPayments || [];
-    if (!payments || payments.length === 0) {
-      return { total: 0, unpaid: 0 };
-    }
+    const charges = (taxpayer as any).charges || [];
 
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
@@ -199,7 +197,7 @@ export default function SMMMDashboard() {
 
     for (let month = 1; month <= currentMonth; month++) {
       const payment = payments.find(
-        p => p.year === currentYear && p.month === month
+        (p: any) => p.year === currentYear && p.month === month
       );
       
       if (payment) {
@@ -210,6 +208,13 @@ export default function SMMMDashboard() {
       } else {
         total += Number((taxpayer as any).monthlyFee || 0);
         unpaid += Number((taxpayer as any).monthlyFee || 0);
+      }
+    }
+
+    for (const charge of charges) {
+      total += Number(charge.amount || 0);
+      if (charge.status !== 'PAID') {
+        unpaid += Number(charge.amount || 0);
       }
     }
 

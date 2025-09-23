@@ -45,6 +45,7 @@ model SMMMAccount {
   superuser   Superuser    @relation(fields: [superuserId], references: [id], onDelete: Cascade)
   taxpayers   Taxpayer[]
   payments    Payment[]
+  charges     ChargeItem[]
   credentials EDevletCredential[]
 
   @@map("smmm_accounts")
@@ -70,6 +71,7 @@ model Taxpayer {
   // İlişkiler
   smmm        SMMMAccount        @relation(fields: [smmmId], references: [id], onDelete: Cascade)
   payments    Payment[]
+  charges     ChargeItem[]
   credentials EDevletCredential[]
   documents   Document[]
 
@@ -184,4 +186,31 @@ enum MessageStatus {
   SENT
   DELIVERED
   FAILED
+}
+
+// Serbest kalem/ek borç kalemleri
+model ChargeItem {
+  id         String   @id @default(uuid())
+  taxpayerId String   @map("taxpayer_id")
+  smmmId     String   @map("smmm_id")
+  title      String
+  type       String?
+  amount     Decimal  @db.Decimal(10, 2)
+  status     ChargeStatus @default(PENDING)
+  dueDate    DateTime? @map("due_date")
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // İlişkiler
+  taxpayer Taxpayer   @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
+  smmm     SMMMAccount @relation(fields: [smmmId], references: [id], onDelete: Cascade)
+
+  @@map("charge_items")
+}
+
+enum ChargeStatus {
+  PENDING
+  PAID
+  CANCELLED
 }

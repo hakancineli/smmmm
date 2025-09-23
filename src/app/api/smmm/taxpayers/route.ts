@@ -68,6 +68,10 @@ export async function GET(request: NextRequest) {
             },
             orderBy: { month: 'desc' },
           },
+          charges: {
+            where: { status: 'PENDING' },
+            orderBy: { createdAt: 'desc' },
+          }
         },
       }),
       prisma.taxpayer.count({ where }),
