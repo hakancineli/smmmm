@@ -168,8 +168,11 @@ export interface CreatePaymentRequest {
 }
 
 export interface UpdatePaymentRequest {
+  year: number;
+  month: number;
+  amount: number;
   paymentStatus: PaymentStatus;
-  paymentDate?: Date;
+  paymentDate?: string;
   notes?: string;
 }
 
