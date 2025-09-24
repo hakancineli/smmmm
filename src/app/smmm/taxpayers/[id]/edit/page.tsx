@@ -141,7 +141,7 @@ export default function EditTaxpayerPage() {
 
       if (response.ok) {
         // Save Vedop credentials if provided
-        if (vedopData.userCode && vedopData.password && vedopData.password !== '********') {
+        if (vedopData.userCode && vedopData.password) {
           try {
             await fetch('/api/smmm/earsiv/credentials', {
               method: 'POST',
