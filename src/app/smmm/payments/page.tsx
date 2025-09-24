@@ -330,8 +330,9 @@ export default function PaymentsPage() {
                         const overdue = now.getDate() > 20;
                         taxpayers.forEach(tp => {
                           // Sum paid amounts for this taxpayer for selected year-month
+                          // Kalan, o ay için girilmiş TÜM ödemelerin toplamına göre hesaplanır
                           const paidSum = payments
-                            .filter(p => p.taxpayer.id === tp.id && p.year === year && p.month === month && p.paymentStatus === 'PAID')
+                            .filter(p => p.taxpayer.id === tp.id && p.year === year && p.month === month)
                             .reduce((s, p) => s + Number(p.amount || 0), 0);
                           const remaining = Math.max(Number(tp.monthlyFee || 0) - paidSum, 0);
                           const hasAnyRecord = payments.some(p => p.taxpayer.id === tp.id && p.year === year && p.month === month);

@@ -194,8 +194,9 @@ export default function SMMMDashboard() {
 
     let unpaidTotal = 0;
     for (let m = 1; m <= prevMonth; m++) {
+      // Aylık kalan, o ayki TÜM ödemelerin (durumdan bağımsız) toplamına göre hesaplanır
       const paidSum = payments
-        .filter((p: any) => p.year === year && p.month === m && p.paymentStatus === 'PAID')
+        .filter((p: any) => p.year === year && p.month === m)
         .reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
       const remaining = Math.max(monthlyFee - paidSum, 0);
       unpaidTotal += remaining;

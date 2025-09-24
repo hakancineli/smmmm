@@ -142,19 +142,17 @@ export default function TaxpayersPage() {
     const targetYear = target.getFullYear();
     const targetMonth = target.getMonth() + 1; // 1-12
 
-    const payment = taxpayer.payments.find(
-      p => p.year === targetYear && p.month === targetMonth
-    );
+    const paidSumForPrev = (taxpayer.payments || [])
+      .filter(p => p.year === targetYear && p.month === targetMonth)
+      .reduce((s, p) => s + Number(p.amount || 0), 0);
 
-    let totalDebt = 0;
-    let unpaidMonths = 0;
+    const monthlyFee = Number((taxpayer as any).monthlyFee || 0);
+    const remaining = Math.max(monthlyFee - paidSumForPrev, 0);
+    const hasDebt = remaining > 0;
+    const unpaidMonths = hasDebt ? 1 : 0;
+    const totalDebt = remaining;
 
-    if (!payment || payment.paymentStatus !== 'PAID') {
-      totalDebt = Number((taxpayer as any).monthlyFee || 0);
-      unpaidMonths = 1;
-    }
-
-    return { totalDebt, unpaidMonths, hasDebt: totalDebt > 0 };
+    return { totalDebt, unpaidMonths, hasDebt };
   };
 
   // Türkçe karakterleri normalize et

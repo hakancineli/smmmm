@@ -127,8 +127,9 @@ export default function TaxpayerDetailPage() {
     let unpaidMonths = 0;
 
     for (let m = 1; m <= targetMonth; m++) {
+      // Aylık kalan, o ayki TÜM ödemelerin (durumdan bağımsız) toplamına göre hesaplanır
       const paidSumForMonth = (taxpayer.payments || [])
-        .filter(p => p.year === targetYear && p.month === m && p.paymentStatus === 'PAID')
+        .filter(p => p.year === targetYear && p.month === m)
         .reduce((s, p) => s + Number(p.amount || 0), 0);
       const monthlyDebt = Math.max(Number(taxpayer.monthlyFee || 0) - paidSumForMonth, 0);
       if (monthlyDebt > 0) {
