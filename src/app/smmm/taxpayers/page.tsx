@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { useRef } from 'react';
 
 interface Taxpayer {
   id: string;
@@ -59,6 +60,7 @@ export default function TaxpayersPage() {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     // Check if user is logged in
@@ -399,6 +401,90 @@ export default function TaxpayersPage() {
     }
   };
 
+  const downloadCsvTemplate = () => {
+    const headers = [
+      'Ad','Soyad','Şirket Ünvanı','TC No','Vergi No','E-posta','Telefon','Aylık Ücret','Vedop Kullanıcı Kodu','Vedop Şifre'
+    ];
+    const csv = headers.join(',') + '\n';
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    a.href = url;
+    a.download = 'mukellef_sablon.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const openImportDialog = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).filter(Boolean);
+      if (lines.length < 2) return alert('Boş dosya');
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      const idx = (name: string) => headers.indexOf(name.toLowerCase());
+      const colAd = idx('ad');
+      const colSoyad = idx('soyad');
+      const colSirket = idx('şirket ünvanı');
+      const colTC = idx('tc no');
+      const colVergi = idx('vergi no');
+      const colEmail = idx('e-posta');
+      const colTel = idx('telefon');
+      const colUcret = idx('aylık ücret');
+      const colVedopUser = idx('vedop kullanıcı kodu');
+      const colVedopPass = idx('vedop şifre');
+      if (colAd<0 || colSoyad<0 || colTC<0 || colUcret<0) {
+        return alert('Zorunlu sütunlar eksik: Ad, Soyad, TC No, Aylık Ücret');
+      }
+      const token = localStorage.getItem('accessToken');
+      for (let i=1;i<lines.length;i++) {
+        const row = lines[i].split(',');
+        if (!row[colAd]) continue;
+        const firstName = row[colAd]?.trim() || '';
+        const lastName = row[colSoyad]?.trim() || '';
+        const tcNumber = row[colTC]?.trim() || '';
+        const monthlyFee = Number((row[colUcret] || '0').toString().replace(/[^0-9.,]/g,'').replace(',','.')) || 0;
+        const taxNumber = colVergi>=0 ? (row[colVergi]?.trim() || undefined) : undefined;
+        const companyName = colSirket>=0 ? (row[colSirket]?.trim() || undefined) : undefined;
+        const email = colEmail>=0 ? (row[colEmail]?.trim() || undefined) : undefined;
+        const phone = colTel>=0 ? (row[colTel]?.trim() || undefined) : undefined;
+        const vedopUser = colVedopUser>=0 ? (row[colVedopUser]?.trim() || '') : '';
+        const vedopPass = colVedopPass>=0 ? (row[colVedopPass]?.trim() || '') : '';
+
+        // Create taxpayer
+        const res = await fetch('/api/smmm/taxpayers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ firstName, lastName, tcNumber, taxNumber, companyName, email, phone, monthlyFee })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const taxpayerId = data?.data?.id;
+          if (taxpayerId && vedopUser && vedopPass) {
+            await fetch('/api/smmm/earsiv/credentials', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ taxpayerId, userCode: vedopUser, password: vedopPass })
+            });
+          }
+        }
+      }
+      alert('İçe aktarma tamamlandı');
+      setPagination(prev => ({ ...prev })); // refresh
+      await loadTaxpayers();
+    } catch (err) {
+      console.error(err);
+      alert('İçe aktarma sırasında hata oluştu');
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   if (isLoading && taxpayers.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -438,6 +524,12 @@ export default function TaxpayersPage() {
                 </svg>
                 PDF
               </button>
+              <button onClick={openImportDialog} className="btn btn-outline">
+                İçe Aktar (CSV)
+              </button>
+              <button onClick={downloadCsvTemplate} className="btn btn-outline">
+                Şablon
+              </button>
               <Link href="/smmm/dashboard" className="btn btn-outline">
                 Dashboard
               </Link>
@@ -456,6 +548,7 @@ export default function TaxpayersPage() {
       </header>
 
       <div className="px-4 sm:px-6 lg:px-8 py-8">
+        <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleImportFile} />
         {/* Search and Filters */}
         <div className="card mb-6">
           <div className="card-body">
