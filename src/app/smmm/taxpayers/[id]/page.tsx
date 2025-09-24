@@ -143,6 +143,17 @@ export default function TaxpayerDetailPage() {
       .filter(ch => String(ch.status).toUpperCase() !== 'PAID')
       .reduce((s, ch) => s + Number(ch.amount || 0), 0);
 
+    // İçinde bulunulan ay için henüz ödeme yoksa, sadece sayaçta göster (toplam borca katma)
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    const paidSumCurrent = (taxpayer.payments || [])
+      .filter(p => p.year === currentYear && p.month === currentMonth)
+      .reduce((s, p) => s + Number(p.amount || 0), 0);
+    const currentRemaining = Math.max(Number(taxpayer.monthlyFee || 0) - paidSumCurrent, 0);
+    if (currentRemaining > 0) {
+      unpaidMonths += 1;
+    }
+
     return { totalDebt: totalDebt + pendingCharges, unpaidMonths };
   };
 
@@ -456,7 +467,10 @@ export default function TaxpayerDetailPage() {
                           return list.sort((a,b)=> b.year - a.year || b.month - a.month);
                         })()
                           .map((payment) => (
-                            <tr key={payment.id} className="table-row">
+                            <tr
+                              key={payment.id}
+                              className={`table-row ${String(payment.paymentStatus||'').toUpperCase()==='OVERDUE' ? 'animate-pulse bg-red-50' : ''}`}
+                            >
                               <td className="table-cell">{payment.year}</td>
                               <td className="table-cell">{getMonthName(payment.month)}</td>
                               <td className="table-cell">
