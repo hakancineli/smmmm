@@ -197,12 +197,14 @@ export default function SMMMDashboard() {
     const startMonth = createdYear === year ? Math.max(1, createdAt.getMonth() + 1) : 1;
 
     let unpaidTotal = 0;
+    let monthsCount = 0;
     // 1) Geçmiş aylar (yıl içi) için borç: varsayılan aylık ücret − o ayın tüm ödemeleri
     for (let m = startMonth; m <= prevMonth; m++) {
       const paidSum = payments
         .filter((p: any) => p.year === year && p.month === m)
         .reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
       const remaining = Math.max(monthlyFee - paidSum, 0);
+      if (remaining > 0) monthsCount += 1;
       unpaidTotal += remaining;
     }
 
@@ -229,6 +231,7 @@ export default function SMMMDashboard() {
         .filter((p: any) => p.year === year && p.month === m)
         .reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
       const remaining = Math.max(monthlyFee - paidSum, 0);
+      if (remaining > 0) monthsCount += 1;
       unpaidTotal += remaining;
     });
 
@@ -242,6 +245,7 @@ export default function SMMMDashboard() {
     const prevMonthStart = new Date(year, prevMonth - 1, 1);
     if (!hasPrevRecord && createdAt <= prevMonthStart) {
       unpaidTotal += monthlyFee;
+      monthsCount += 1;
     }
 
     const totalDebt = unpaidTotal + pendingCharges;
@@ -251,7 +255,8 @@ export default function SMMMDashboard() {
       .reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
     const currentRemaining = Math.max(monthlyFee - currentPaidSum, 0);
     const totalWithCurrent = totalDebt + currentRemaining;
-    return { total: totalWithCurrent, unpaid: totalWithCurrent };
+    if (currentRemaining > 0) monthsCount += 1;
+    return { total: totalWithCurrent, unpaid: totalWithCurrent, months: monthsCount };
   };
 
   const handleLogout = () => {
@@ -537,9 +542,9 @@ export default function SMMMDashboard() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <div>
+                            <div className="text-right">
                               <div className="font-medium">₺{debtSummary.unpaid.toLocaleString('tr-TR')}</div>
-                              <div className="text-xs text-gray-500">Toplam: ₺{debtSummary.total.toLocaleString('tr-TR')}</div>
+                              <div className="text-xs text-gray-500">Toplam: ₺{debtSummary.total.toLocaleString('tr-TR')} • {debtSummary.months || 0} ay</div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

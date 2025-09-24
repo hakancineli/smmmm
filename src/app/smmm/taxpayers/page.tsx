@@ -559,7 +559,7 @@ export default function TaxpayersPage() {
                                   ₺{debtBalance.totalDebt.toLocaleString('tr-TR')}
                                 </div>
                                 <div className="text-xs text-gray-500">
-                                  {debtBalance.unpaidMonths} ay
+                                  Toplam: ₺{debtBalance.totalDebt.toLocaleString('tr-TR')} • {debtBalance.unpaidMonths} ay
                                 </div>
                               </div>
                             ) : (
