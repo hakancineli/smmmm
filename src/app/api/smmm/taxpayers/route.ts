@@ -170,12 +170,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Tax Number validation (if provided)
-    if (taxNumber && !validateTaxNumber(taxNumber)) {
-      return NextResponse.json(
-        { error: 'Geçersiz Vergi No' },
-        { status: 400 }
-      );
-    }
+    // Vergi No formatını serbest bırakıyoruz (10/11 hane vs. kontrol edilmez)
 
     // TC No uniqueness check within the same SMMM
     if (tcNumber) {
