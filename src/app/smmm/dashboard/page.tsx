@@ -184,38 +184,24 @@ export default function SMMMDashboard() {
   };
 
   const getDebtSummary = (taxpayer: Taxpayer) => {
-    const payments = (taxpayer as any).payments || (taxpayer as any).monthlyPayments || [];
-    const charges = (taxpayer as any).charges || [];
-
+    // Aylık bazda: her ay için (yıl içi) aylık ücret − o ay ödenen toplam (PAID). Negatifse 0.
+    const payments = (taxpayer as any).payments || [];
+    const monthlyFee = Number((taxpayer as any).monthlyFee || 0);
     const now = new Date();
-    const target = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const targetYear = target.getFullYear();
-    const targetMonth = target.getMonth() + 1;
-    
-    let total = 0;
-    let unpaid = 0;
+    const year = now.getFullYear();
+    const prevMonth = new Date(year, now.getMonth() - 1, 1).getMonth() + 1;
 
-    // Hedef (bir önceki) ay için hesapla
-    const payment = payments.find((p: any) => p.year === targetYear && p.month === targetMonth);
-    if (payment) {
-      total += Number(payment.amount || 10 * 0); // keep type number
-      if (payment.paymentStatus !== 'PAID') {
-        unpaid += Number(payment.amount || 0);
-      }
-    } else {
-      const fee = Number((taxpayer as any).monthlyFee || 0);
-      total += fee;
-      unpaid += fee;
+    let unpaidTotal = 0;
+    for (let m = 1; m <= prevMonth; m++) {
+      const paidSum = payments
+        .filter((p: any) => p.year === year && p.month === m && p.paymentStatus === 'PAID')
+        .reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+      const remaining = Math.max(monthlyFee - paidSum, 0);
+      unpaidTotal += remaining;
     }
 
-    for (const charge of charges) {
-      total += Number(charge.amount || 0);
-      if (charge.status !== 'PAID') {
-        unpaid += Number(charge.amount || 0);
-      }
-    }
-
-    return { total, unpaid };
+    // Not: serbest kalemleri ayrıca borca katmak isterseniz burada ekleyebiliriz
+    return { total: unpaidTotal, unpaid: unpaidTotal };
   };
 
   const handleLogout = () => {
