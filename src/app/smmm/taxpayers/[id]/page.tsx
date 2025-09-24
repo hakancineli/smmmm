@@ -421,8 +421,10 @@ export default function TaxpayerDetailPage() {
                           const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
                           const targetYear = prev.getFullYear();
                           const targetMonth = prev.getMonth() + 1;
+                          const createdAt = new Date((taxpayer as any).createdAt || now);
                           const hasPrevRecord = list.some(p => p.year === targetYear && p.month === targetMonth);
-                          if (!hasPrevRecord) {
+                          const prevMonthStart = new Date(targetYear, targetMonth - 1, 1);
+                          if (!hasPrevRecord && createdAt <= prevMonthStart) {
                             const paidSumPrev = (taxpayer.payments || [])
                               .filter(p => p.year === targetYear && p.month === targetMonth)
                               .reduce((s, p) => s + Number(p.amount || 0), 0);

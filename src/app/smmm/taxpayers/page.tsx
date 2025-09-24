@@ -149,12 +149,15 @@ export default function TaxpayersPage() {
     const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const year = prev.getFullYear();
     const prevMonth = prev.getMonth() + 1;
+    const createdAt = new Date((taxpayer as any).createdAt || now);
+    const createdYear = createdAt.getFullYear();
+    const startMonth = createdYear === year ? Math.max(1, createdAt.getMonth() + 1) : 1;
 
     let totalDebt = 0;
     let monthsCount = 0;
 
     // Geçmiş aylar (1..prevMonth)
-    for (let m = 1; m <= prevMonth; m++) {
+    for (let m = startMonth; m <= prevMonth; m++) {
       const paidSum = payments
         .filter((p: any) => p.year === year && p.month === m)
         .reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
@@ -178,7 +181,8 @@ export default function TaxpayersPage() {
 
     // Önceki ay için hiç kayıt yoksa, varsayılan aylık ücret
     const hasPrevRecord = payments.some((p: any) => p.year === year && p.month === prevMonth);
-    if (!hasPrevRecord) {
+    const prevMonthStart = new Date(year, prevMonth - 1, 1);
+    if (!hasPrevRecord && createdAt <= prevMonthStart) {
       totalDebt += monthlyFee;
       monthsCount += 1;
     }

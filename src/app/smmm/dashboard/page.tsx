@@ -192,10 +192,13 @@ export default function SMMMDashboard() {
     const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const year = prev.getFullYear();
     const prevMonth = prev.getMonth() + 1;
+    const createdAt = new Date((taxpayer as any).createdAt || now);
+    const createdYear = createdAt.getFullYear();
+    const startMonth = createdYear === year ? Math.max(1, createdAt.getMonth() + 1) : 1;
 
     let unpaidTotal = 0;
     // 1) Geçmiş aylar (yıl içi) için borç: varsayılan aylık ücret − o ayın tüm ödemeleri
-    for (let m = 1; m <= prevMonth; m++) {
+    for (let m = startMonth; m <= prevMonth; m++) {
       const paidSum = payments
         .filter((p: any) => p.year === year && p.month === m)
         .reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
@@ -222,14 +225,15 @@ export default function SMMMDashboard() {
       .filter((c: any) => String(c.status).toUpperCase() !== 'PAID')
       .reduce((s: number, c: any) => s + Number(c.amount || 0), 0);
 
-    // 3) Önceki ay için hiç kayıt yoksa, varsayılan borcu ekle (sanal satır mantığı)
+    // 3) Önceki ay için hiç kayıt yoksa, ve mükellef o ay mevcut idiyse varsayılan borcu ekle
     const hasPrevRecord = payments.some((p: any) => p.year === year && p.month === prevMonth);
-    if (!hasPrevRecord) {
+    const prevMonthStart = new Date(year, prevMonth - 1, 1);
+    if (!hasPrevRecord && createdAt <= prevMonthStart) {
       unpaidTotal += monthlyFee;
     }
 
     const totalDebt = unpaidTotal + pendingCharges;
-    // İçinde bulunulan ay için kalan borcu da toplam borca dahil et
+    // İçinde bulunulan ay için kalan borcu da toplam borca dahil et (mükellef bu ay oluşturulduysa bu ay dahil edilir)
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
     const currentPaidSum = payments
