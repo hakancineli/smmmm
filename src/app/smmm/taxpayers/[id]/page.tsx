@@ -280,6 +280,9 @@ export default function TaxpayerDetailPage() {
               <p className="text-sm text-gray-600">Mükellef Detayları</p>
             </div>
             <div className="flex items-center space-x-4">
+              <Link href="/smmm/dashboard" className="btn btn-outline">
+                Dashboard
+              </Link>
               <Link href="/smmm/taxpayers" className="btn btn-outline">
                 Geri Dön
               </Link>
