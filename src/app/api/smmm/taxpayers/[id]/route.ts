@@ -44,6 +44,10 @@ export async function GET(
         notes: {
           orderBy: { createdAt: 'desc' }
         },
+        earsivCredential: true,
+        earsivInvoices: {
+          orderBy: { createdAt: 'desc' }
+        },
         charges: {
           orderBy: { createdAt: 'desc' }
         }

@@ -42,6 +42,7 @@ interface Taxpayer {
     isDone: boolean;
     createdAt: string;
   }[];
+  earsivCredential?: { userCode: string } | null;
 }
 
 export default function TaxpayerDetailPage() {
@@ -718,10 +719,59 @@ export default function TaxpayerDetailPage() {
               </div>
             </div>
 
+            {/* E-Arşiv Giriş Bilgileri */}
+            <EArsivSection taxpayerId={taxpayer.id} initialUserCode={(taxpayer as any).earsivCredential?.userCode || ''} />
+
             {/* Notlar / To-Do */}
             <NotesSection taxpayerId={taxpayer.id} initialNotes={taxpayer.notes || []} onChanged={loadTaxpayerDetail} />
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function EArsivSection({ taxpayerId, initialUserCode }: { taxpayerId: string; initialUserCode: string; }) {
+  const [userCode, setUserCode] = useState(initialUserCode || '');
+  const [password, setPassword] = useState('');
+  useEffect(() => setUserCode(initialUserCode || ''), [initialUserCode]);
+
+  const save = async () => {
+    if (!userCode || !password) return;
+    try {
+      const token = localStorage.getItem('accessToken');
+      const res = await fetch('/api/smmm/earsiv/credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ taxpayerId, userCode, password })
+      });
+      if (res.ok) {
+        setPassword('');
+        alert('E-Arşiv bilgileri kaydedildi');
+      }
+    } catch {}
+  };
+
+  return (
+    <div className="card">
+      <div className="card-header">
+        <h2 className="text-lg font-semibold text-gray-900">E‑Arşiv Giriş Bilgileri</h2>
+      </div>
+      <div className="card-body space-y-3">
+        <div className="grid grid-cols-1 gap-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Kullanıcı Kodu</label>
+            <input className="input input-bordered w-full" value={userCode} onChange={(e)=>setUserCode(e.target.value)} placeholder="Örn: 49316084" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Şifre</label>
+            <input className="input input-bordered w-full" type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="••••••" />
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <button className="btn btn-primary" onClick={save}>Kaydet</button>
+        </div>
+        <p className="text-xs text-gray-500">Giriş sayfası: <a className="text-primary-600 underline" href="https://earsivportal.efatura.gov.tr/intragiris.html" target="_blank" rel="noreferrer">e‑Arşiv Portal</a></p>
       </div>
     </div>
   );

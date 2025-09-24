@@ -37,6 +37,8 @@ model SMMMAccount {
   credentials      EDevletCredential[]
   payments         Payment[]
   notes            TaxpayerNote[]
+  earsivCredentials EArsivCredential[]
+  earsivInvoices    EArsivInvoice[]
   superuser        Superuser           @relation(fields: [superuserId], references: [id], onDelete: Cascade)
   taxpayers        Taxpayer[]
 
@@ -63,6 +65,8 @@ model Taxpayer {
   credentials EDevletCredential[]
   payments    Payment[]
   notes       TaxpayerNote[]
+  earsivCredential EArsivCredential?
+  earsivInvoices   EArsivInvoice[]
   smmm        SMMMAccount         @relation(fields: [smmmId], references: [id], onDelete: Cascade)
 
   @@map("taxpayers")
@@ -204,4 +208,38 @@ model TaxpayerNote {
   smmm       SMMMAccount  @relation(fields: [smmmId], references: [id], onDelete: Cascade)
 
   @@map("taxpayer_notes")
+}
+
+model EArsivCredential {
+  id              String      @id @default(uuid())
+  taxpayerId      String      @map("taxpayer_id")
+  smmmId          String      @map("smmm_id")
+  userCode        String      @map("user_code")
+  passwordEnc     String      @map("password_enc")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  taxpayer        Taxpayer    @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
+  smmm            SMMMAccount @relation(fields: [smmmId], references: [id], onDelete: Cascade)
+
+  @@unique([taxpayerId])
+  @@map("earsiv_credentials")
+}
+
+model EArsivInvoice {
+  id              String      @id @default(uuid())
+  taxpayerId      String      @map("taxpayer_id")
+  smmmId          String      @map("smmm_id")
+  uuid            String?
+  status          String      @default("PENDING")
+  scenario        String?
+  pdfUrl          String?     @map("pdf_url")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  taxpayer        Taxpayer    @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
+  smmm            SMMMAccount @relation(fields: [smmmId], references: [id], onDelete: Cascade)
+
+  @@index([taxpayerId])
+  @@index([smmmId])
+  @@map("earsiv_invoices")
 }
