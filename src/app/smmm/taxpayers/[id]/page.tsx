@@ -546,7 +546,9 @@ export default function TaxpayerDetailPage() {
                                           if (res.ok) {
                                             await loadTaxpayerDetail();
                                           }
-                                        } catch (e) {}
+                                        } catch (e) {
+                                          console.error('Ödeme silme hatası:', e);
+                                        }
                                       }}
                                     >
                                       Ödendi İşaretle
@@ -627,7 +629,9 @@ export default function TaxpayerDetailPage() {
                                       if (res.ok) {
                                         await loadTaxpayerDetail();
                                       }
-                                    } catch (e) {}
+                                    } catch (e) {
+                                      console.error('Ödeme silme hatası:', e);
+                                    }
                                   }}
                                 >
                                   Ödendi İşaretle
@@ -753,7 +757,9 @@ function EArsivSection({ taxpayerId, initialUserCode }: { taxpayerId: string; in
             setHasPassword(!!json.data.hasPassword);
           }
         }
-      } catch {}
+      } catch (err) {
+        console.error('Vedop bilgileri alınamadı:', err);
+      }
     };
     fetchCredential();
   }, [taxpayerId]);
@@ -1138,7 +1144,9 @@ function NotesSection({ taxpayerId, initialNotes, onChanged }: { taxpayerId: str
         setNewText('');
         await onChanged();
       }
-    } catch {}
+    } catch (err) {
+      console.error('Not ekleme hatası:', err);
+    }
   };
 
   const toggleNote = async (id: string, isDone: boolean) => {
@@ -1152,7 +1160,9 @@ function NotesSection({ taxpayerId, initialNotes, onChanged }: { taxpayerId: str
       if (res.ok) {
         await onChanged();
       }
-    } catch {}
+    } catch (err) {
+      console.error('Not ekleme hatası:', err);
+    }
   };
 
   const deleteNote = async (id: string) => {
@@ -1165,7 +1175,9 @@ function NotesSection({ taxpayerId, initialNotes, onChanged }: { taxpayerId: str
       if (res.ok) {
         await onChanged();
       }
-    } catch {}
+    } catch (err) {
+      console.error('Not ekleme hatası:', err);
+    }
   };
 
   return (
