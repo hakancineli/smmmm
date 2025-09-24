@@ -772,7 +772,10 @@ function EArsivSection({ taxpayerId, initialUserCode }: { taxpayerId: string; in
         setHasPassword(true);
         alert('E-Arşiv bilgileri kaydedildi');
       }
-    } catch {}
+    } catch (err) {
+      console.error('E-Arşiv bilgileri kaydedilemedi:', err);
+      alert('E-Arşiv bilgileri kaydedilemedi');
+    }
   };
 
   return (
