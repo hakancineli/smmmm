@@ -229,16 +229,15 @@ export default function SMMMDashboard() {
     }
 
     const totalDebt = unpaidTotal + pendingCharges;
-    // İçinde bulunulan ay için hiç kayıt yoksa, sayaç için bir aylık daha ekle (toplama değil, sadece unpaid sayısı istiyorsak genişletebiliriz)
+    // İçinde bulunulan ay için kalan borcu da toplam borca dahil et
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
-    const hasCurrent = payments.some((p: any) => p.year === currentYear && p.month === currentMonth);
     const currentPaidSum = payments
       .filter((p: any) => p.year === currentYear && p.month === currentMonth)
       .reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
     const currentRemaining = Math.max(monthlyFee - currentPaidSum, 0);
-    const unpaidWithCurrent = currentRemaining > 0 ? totalDebt + 0 : totalDebt;
-    return { total: unpaidWithCurrent, unpaid: totalDebt };
+    const totalWithCurrent = totalDebt + currentRemaining;
+    return { total: totalWithCurrent, unpaid: totalWithCurrent };
   };
 
   const handleLogout = () => {
