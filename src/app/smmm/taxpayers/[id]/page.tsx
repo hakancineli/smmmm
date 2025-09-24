@@ -123,15 +123,35 @@ export default function TaxpayerDetailPage() {
     const targetYear = prev.getFullYear();
     const targetMonth = prev.getMonth() + 1;
 
+    const createdAt = new Date((taxpayer as any).createdAt || now);
+
     let totalDebt = 0;
     let unpaidMonths = 0;
 
-    for (let m = 1; m <= targetMonth; m++) {
-      // Aylık kalan, o ayki TÜM ödemelerin (durumdan bağımsız) toplamına göre hesaplanır
+    const monthlyFeeNum = Number(taxpayer.monthlyFee || 0);
+
+    // Eğer hiç ödeme kaydı yoksa, sadece bu ayın kalanını göster (bootstrap mantığı)
+    if ((taxpayer.payments || []).length === 0) {
+      const currentPaidSum = (taxpayer.payments || [])
+        .filter(p => p.year === now.getFullYear() && p.month === (now.getMonth() + 1))
+        .reduce((s, p) => s + Number(p.amount || 0), 0);
+      const currentRemaining = Math.max(monthlyFeeNum - currentPaidSum, 0);
+      const pendingChargesBootstrap = (taxpayer.charges || [])
+        .filter(ch => String(ch.status).toUpperCase() !== 'PAID')
+        .reduce((s, ch) => s + Number(ch.amount || 0), 0);
+      return {
+        totalDebt: currentRemaining + pendingChargesBootstrap,
+        unpaidMonths: currentRemaining > 0 ? 1 : 0
+      };
+    }
+
+    // Normal durumda: yalnızca createdAt tarihinden sonraki ayları hesapla
+    const startMonth = createdAt.getFullYear() === targetYear ? Math.max(1, createdAt.getMonth() + 1) : 1;
+    for (let m = startMonth; m <= targetMonth; m++) {
       const paidSumForMonth = (taxpayer.payments || [])
         .filter(p => p.year === targetYear && p.month === m)
         .reduce((s, p) => s + Number(p.amount || 0), 0);
-      const monthlyDebt = Math.max(Number(taxpayer.monthlyFee || 0) - paidSumForMonth, 0);
+      const monthlyDebt = Math.max(monthlyFeeNum - paidSumForMonth, 0);
       if (monthlyDebt > 0) {
         totalDebt += monthlyDebt;
         unpaidMonths += 1;
@@ -149,7 +169,7 @@ export default function TaxpayerDetailPage() {
     const paidSumCurrent = (taxpayer.payments || [])
       .filter(p => p.year === currentYear && p.month === currentMonth)
       .reduce((s, p) => s + Number(p.amount || 0), 0);
-    const currentRemaining = Math.max(Number(taxpayer.monthlyFee || 0) - paidSumCurrent, 0);
+    const currentRemaining = Math.max(monthlyFeeNum - paidSumCurrent, 0);
     if (currentRemaining > 0) {
       unpaidMonths += 1;
     }
