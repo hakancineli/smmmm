@@ -25,6 +25,11 @@ interface Taxpayer {
     paymentStatus: string;
     paymentDate?: string;
   }[];
+  charges?: {
+    id: string;
+    amount: number;
+    status: string;
+  }[];
 }
 
 interface PaginatedResponse {
@@ -137,21 +142,65 @@ export default function TaxpayersPage() {
 
   const getDebtBalance = (taxpayer: Taxpayer) => {
     const now = new Date();
-    // Hedef ay: içinde bulunulan aydan bir önceki ay
-    const target = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const targetYear = target.getFullYear();
-    const targetMonth = target.getMonth() + 1; // 1-12
-
-    const paidSumForPrev = (taxpayer.payments || [])
-      .filter(p => p.year === targetYear && p.month === targetMonth)
-      .reduce((s, p) => s + Number(p.amount || 0), 0);
-
     const monthlyFee = Number((taxpayer as any).monthlyFee || 0);
-    const remaining = Math.max(monthlyFee - paidSumForPrev, 0);
-    const hasDebt = remaining > 0;
-    const unpaidMonths = hasDebt ? 1 : 0;
-    const totalDebt = remaining;
+    const payments = (taxpayer as any).payments || [];
+    const charges = (taxpayer as any).charges || [];
 
+    const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const year = prev.getFullYear();
+    const prevMonth = prev.getMonth() + 1;
+
+    let totalDebt = 0;
+    let monthsCount = 0;
+
+    // Geçmiş aylar (1..prevMonth)
+    for (let m = 1; m <= prevMonth; m++) {
+      const paidSum = payments
+        .filter((p: any) => p.year === year && p.month === m)
+        .reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+      const remaining = Math.max(monthlyFee - paidSum, 0);
+      if (remaining > 0) monthsCount += 1;
+      totalDebt += remaining;
+    }
+
+    // Gelecek ay(lar) için kayıt varsa kısmi kalanlar
+    const futureMonthsSet = new Set<number>(
+      payments.filter((p: any) => p.year === year && p.month > prevMonth).map((p: any) => p.month)
+    );
+    futureMonthsSet.forEach((m) => {
+      const paidSum = payments
+        .filter((p: any) => p.year === year && p.month === m)
+        .reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+      const remaining = Math.max(monthlyFee - paidSum, 0);
+      if (remaining > 0) monthsCount += 1;
+      totalDebt += remaining;
+    });
+
+    // Önceki ay için hiç kayıt yoksa, varsayılan aylık ücret
+    const hasPrevRecord = payments.some((p: any) => p.year === year && p.month === prevMonth);
+    if (!hasPrevRecord) {
+      totalDebt += monthlyFee;
+      monthsCount += 1;
+    }
+
+    // İçinde bulunulan ayın kalanı
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    const currentPaidSum = payments
+      .filter((p: any) => p.year === currentYear && p.month === currentMonth)
+      .reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+    const currentRemaining = Math.max(monthlyFee - currentPaidSum, 0);
+    if (currentRemaining > 0) monthsCount += 1;
+    totalDebt += currentRemaining;
+
+    // Bekleyen serbest kalemler
+    const pendingCharges = (charges || [])
+      .filter((c: any) => String(c.status).toUpperCase() !== 'PAID')
+      .reduce((s: number, c: any) => s + Number(c.amount || 0), 0);
+    totalDebt += pendingCharges;
+
+    const hasDebt = totalDebt > 0;
+    const unpaidMonths = hasDebt ? monthsCount : 0;
     return { totalDebt, unpaidMonths, hasDebt };
   };
 
