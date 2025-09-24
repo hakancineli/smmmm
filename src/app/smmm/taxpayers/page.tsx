@@ -405,7 +405,8 @@ export default function TaxpayersPage() {
     const headers = [
       'Ad','Soyad','Şirket Ünvanı','TC No','Vergi No','E-posta','Telefon','Aylık Ücret','Vedop Kullanıcı Kodu','Vedop Şifre'
     ];
-    const csv = headers.join(',') + '\n';
+    // Excel/TR için UTF-8 BOM ve noktalı virgül ayracı kullan
+    const csv = "\ufeff" + headers.join(';') + '\n';
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const a = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -426,7 +427,8 @@ export default function TaxpayersPage() {
       const text = await file.text();
       const lines = text.split(/\r?\n/).filter(Boolean);
       if (lines.length < 2) return alert('Boş dosya');
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      const delimiter = lines[0].includes(';') ? ';' : ',';
+      const headers = lines[0].split(delimiter).map(h => h.trim().toLowerCase());
       const idx = (name: string) => headers.indexOf(name.toLowerCase());
       const colAd = idx('ad');
       const colSoyad = idx('soyad');
@@ -443,7 +445,7 @@ export default function TaxpayersPage() {
       }
       const token = localStorage.getItem('accessToken');
       for (let i=1;i<lines.length;i++) {
-        const row = lines[i].split(',');
+        const row = lines[i].split(delimiter);
         if (!row[colAd]) continue;
         const firstName = row[colAd]?.trim() || '';
         const lastName = row[colSoyad]?.trim() || '';
