@@ -734,7 +734,29 @@ export default function TaxpayerDetailPage() {
 function EArsivSection({ taxpayerId, initialUserCode }: { taxpayerId: string; initialUserCode: string; }) {
   const [userCode, setUserCode] = useState(initialUserCode || '');
   const [password, setPassword] = useState('');
+  const [hasPassword, setHasPassword] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   useEffect(() => setUserCode(initialUserCode || ''), [initialUserCode]);
+
+  // Ensure we load latest stored credential (user code) from API
+  useEffect(() => {
+    const fetchCredential = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        const res = await fetch(`/api/smmm/earsiv/credentials?taxpayerId=${taxpayerId}` , {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.data) {
+            if (json.data.userCode) setUserCode(json.data.userCode);
+            setHasPassword(!!json.data.hasPassword);
+          }
+        }
+      } catch {}
+    };
+    fetchCredential();
+  }, [taxpayerId]);
 
   const save = async () => {
     if (!userCode || !password) return;
@@ -747,6 +769,7 @@ function EArsivSection({ taxpayerId, initialUserCode }: { taxpayerId: string; in
       });
       if (res.ok) {
         setPassword('');
+        setHasPassword(true);
         alert('E-Arşiv bilgileri kaydedildi');
       }
     } catch {}
@@ -754,8 +777,16 @@ function EArsivSection({ taxpayerId, initialUserCode }: { taxpayerId: string; in
 
   return (
     <div className="card">
-      <div className="card-header">
+      <div className="card-header flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">E‑Arşiv Giriş Bilgileri</h2>
+        {hasPassword && (
+          <button
+            className={`btn btn-outline btn-xs ${editMode ? 'btn-danger' : ''}`}
+            onClick={() => setEditMode(v => !v)}
+          >
+            {editMode ? 'Vazgeç' : 'Düzenle'}
+          </button>
+        )}
       </div>
       <div className="card-body space-y-3">
         <div className="grid grid-cols-1 gap-3">
@@ -770,6 +801,7 @@ function EArsivSection({ taxpayerId, initialUserCode }: { taxpayerId: string; in
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
+              disabled={hasPassword && !editMode}
             />
           </div>
           <div>
@@ -777,14 +809,18 @@ function EArsivSection({ taxpayerId, initialUserCode }: { taxpayerId: string; in
             <input
               className="input input-bordered w-full"
               type="password"
-              value={password}
+              value={(hasPassword && !editMode) ? '********' : password}
               onChange={(e)=>setPassword(e.target.value)}
               placeholder="••••••"
               name="earsiv_password"
               autoComplete="new-password"
               autoCorrect="off"
               spellCheck={false}
+              disabled={hasPassword && !editMode}
             />
+            {hasPassword && (
+              <p className="text-xs text-gray-500 mt-1">Şifre kayıtlı. Değiştirmek için Düzenle'ye basın.</p>
+            )}
           </div>
         </div>
         <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -799,7 +835,7 @@ function EArsivSection({ taxpayerId, initialUserCode }: { taxpayerId: string; in
             </svg>
             e‑Arşiv Portal
           </a>
-          <button className="btn btn-primary flex-1 min-w-[140px]" onClick={save}>Kaydet</button>
+          <button className="btn btn-primary flex-1 min-w-[140px]" onClick={save} disabled={(hasPassword && !editMode)}>Kaydet</button>
         </div>
       </div>
     </div>
