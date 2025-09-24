@@ -826,10 +826,71 @@ function EArsivSection({ taxpayerId, initialUserCode }: { taxpayerId: string; in
         </div>
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <a
-            href="https://earsivportal.efatura.gov.tr/intragiris.html"
+            href={`https://earsivportal.efatura.gov.tr/intragiris.html?userCode=${encodeURIComponent(userCode || '')}&password=${encodeURIComponent(password || '')}`}
             target="_blank"
             rel="noreferrer"
             className="btn btn-outline flex-1 min-w-[180px]"
+            onClick={(e) => {
+              if (!userCode || !password) {
+                e.preventDefault();
+                alert('Önce kullanıcı kodu ve şifre girin');
+                return;
+              }
+              
+              // Portal sayfasını aç ve form doldurma scriptini yükle
+              const portalUrl = `https://earsivportal.efatura.gov.tr/intragiris.html?userCode=${encodeURIComponent(userCode)}&password=${encodeURIComponent(password)}`;
+              const newWindow = window.open(portalUrl, '_blank');
+              
+              if (newWindow) {
+                // Script yüklendikten sonra form doldurma kodunu çalıştır
+                newWindow.addEventListener('load', () => {
+                  const script = newWindow.document.createElement('script');
+                  script.textContent = `
+                    (function() {
+                      const urlParams = new URLSearchParams(window.location.search);
+                      const userCode = urlParams.get('userCode');
+                      const password = urlParams.get('password');
+                      
+                      if (userCode && password) {
+                        function fillForm() {
+                          const userCodeInputs = [
+                            document.querySelector('input[name="kullanici"]'),
+                            document.querySelector('input[name="userCode"]'),
+                            document.querySelector('input[name="username"]'),
+                            document.querySelector('input[placeholder*="kullanıcı" i]'),
+                            document.querySelector('input[type="text"]')
+                          ].filter(Boolean);
+                          
+                          const passwordInputs = [
+                            document.querySelector('input[name="sifre"]'),
+                            document.querySelector('input[name="password"]'),
+                            document.querySelector('input[type="password"]')
+                          ].filter(Boolean);
+                          
+                          if (userCodeInputs.length > 0) {
+                            userCodeInputs[0].value = userCode;
+                            userCodeInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+                            console.log('Kullanıcı kodu dolduruldu');
+                          }
+                          
+                          if (passwordInputs.length > 0) {
+                            passwordInputs[0].value = password;
+                            passwordInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+                            console.log('Şifre dolduruldu');
+                          }
+                        }
+                        
+                        setTimeout(fillForm, 1000);
+                        setTimeout(fillForm, 3000);
+                      }
+                    })();
+                  `;
+                  newWindow.document.head.appendChild(script);
+                });
+              }
+              
+              e.preventDefault();
+            }}
           >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 3h7v7m0-7L10 14" />
