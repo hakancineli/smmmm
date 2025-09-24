@@ -186,6 +186,7 @@ export default function SMMMDashboard() {
   const getDebtSummary = (taxpayer: Taxpayer) => {
     // Aylık bazda: her ay için (yıl içi) aylık ücret − o ay ödenen toplam (PAID). Negatifse 0.
     const payments = (taxpayer as any).payments || [];
+    const charges = (taxpayer as any).charges || [];
     const monthlyFee = Number((taxpayer as any).monthlyFee || 0);
     const now = new Date();
     const year = now.getFullYear();
@@ -200,8 +201,13 @@ export default function SMMMDashboard() {
       unpaidTotal += remaining;
     }
 
-    // Not: serbest kalemleri ayrıca borca katmak isterseniz burada ekleyebiliriz
-    return { total: unpaidTotal, unpaid: unpaidTotal };
+    // Serbest kalemler (PENDING): tek seferlik borç, doğrudan toplam borca eklenir
+    const pendingCharges = charges
+      .filter((c: any) => String(c.status).toUpperCase() !== 'PAID')
+      .reduce((s: number, c: any) => s + Number(c.amount || 0), 0);
+
+    const totalDebt = unpaidTotal + pendingCharges;
+    return { total: totalDebt, unpaid: totalDebt };
   };
 
   const handleLogout = () => {
