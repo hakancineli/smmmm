@@ -222,6 +222,12 @@ export default function SMMMDashboard() {
       .filter((c: any) => String(c.status).toUpperCase() !== 'PAID')
       .reduce((s: number, c: any) => s + Number(c.amount || 0), 0);
 
+    // 3) Önceki ay için hiç kayıt yoksa, varsayılan borcu ekle (sanal satır mantığı)
+    const hasPrevRecord = payments.some((p: any) => p.year === year && p.month === prevMonth);
+    if (!hasPrevRecord) {
+      unpaidTotal += monthlyFee;
+    }
+
     const totalDebt = unpaidTotal + pendingCharges;
     return { total: totalDebt, unpaid: totalDebt };
   };

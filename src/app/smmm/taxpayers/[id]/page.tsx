@@ -406,6 +406,30 @@ export default function TaxpayerDetailPage() {
                               });
                             }
                           });
+                          // Önceki ay için hiç kayıt yoksa, varsayılan (PENDING) sanal satır ekle
+                          const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                          const targetYear = prev.getFullYear();
+                          const targetMonth = prev.getMonth() + 1;
+                          const hasPrevRecord = list.some(p => p.year === targetYear && p.month === targetMonth);
+                          if (!hasPrevRecord) {
+                            const paidSumPrev = (taxpayer.payments || [])
+                              .filter(p => p.year === targetYear && p.month === targetMonth)
+                              .reduce((s, p) => s + Number(p.amount || 0), 0);
+                            const remainingPrev = Math.max(monthlyFee - paidSumPrev, 0);
+                            if (remainingPrev > 0) {
+                              const monthDate = new Date(targetYear, targetMonth - 1, 21);
+                              const isOverduePrev = now > monthDate;
+                              list.push({
+                                id: `virtual-${taxpayer.id}-${targetYear}-${targetMonth}`,
+                                year: targetYear,
+                                month: targetMonth,
+                                amount: remainingPrev,
+                                paymentStatus: isOverduePrev ? 'OVERDUE' : 'PENDING',
+                                paymentDate: undefined,
+                                notes: 'Önceki ay borcu',
+                              });
+                            }
+                          }
                           return list.sort((a,b)=> b.year - a.year || b.month - a.month);
                         })()
                           .map((payment) => (
