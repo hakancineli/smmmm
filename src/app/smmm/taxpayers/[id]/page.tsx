@@ -724,7 +724,7 @@ export default function TaxpayerDetailPage() {
             </div>
 
             {/* E-Arşiv Giriş Bilgileri */}
-            <EArsivSection taxpayerId={taxpayer.id} initialUserCode={(taxpayer as any).earsivCredential?.userCode || ''} />
+            <EArsivSection taxpayerId={taxpayer.id} initialUserCode={taxpayer.earsivCredential?.userCode || ''} />
 
             {/* Notlar / To-Do */}
             <NotesSection taxpayerId={taxpayer.id} initialNotes={taxpayer.notes || []} onChanged={loadTaxpayerDetail} />
@@ -763,6 +763,13 @@ function EArsivSection({ taxpayerId, initialUserCode }: { taxpayerId: string; in
     };
     fetchCredential();
   }, [taxpayerId]);
+
+  // Update hasPassword when initialUserCode changes (from Excel import)
+  useEffect(() => {
+    if (initialUserCode && initialUserCode.trim() !== '') {
+      setHasPassword(true);
+    }
+  }, [initialUserCode]);
 
   const save = async () => {
     if (!userCode || !password) return;
@@ -803,7 +810,7 @@ function EArsivSection({ taxpayerId, initialUserCode }: { taxpayerId: string; in
             <label className="block text-sm font-medium text-gray-700 mb-1">Kullanıcı Kodu</label>
             <input
               className="input input-bordered w-full"
-              value={(hasPassword && !editMode) ? '********' : userCode}
+              value={(hasPassword && !editMode) ? (userCode || '********') : userCode}
               onChange={(e)=>setUserCode(e.target.value)}
               placeholder="Örn: 49316084"
               name="earsiv_user_code"
@@ -827,9 +834,10 @@ function EArsivSection({ taxpayerId, initialUserCode }: { taxpayerId: string; in
               autoCorrect="off"
               spellCheck={false}
               disabled={hasPassword && !editMode}
+              readOnly={hasPassword && !editMode}
             />
             {hasPassword && (
-              <p className="text-xs text-gray-500 mt-1">Şifre kayıtlı. Değiştirmek için Düzenle'ye basın.</p>
+              <p className="text-xs text-gray-500 mt-1">Vedop bilgileri kayıtlı. Değiştirmek için Düzenle'ye basın.</p>
             )}
           </div>
         </div>
