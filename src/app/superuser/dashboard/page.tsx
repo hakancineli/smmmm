@@ -44,6 +44,16 @@ export default function SuperuserDashboard() {
         },
       });
 
+      if (response.status === 401) {
+        // Session expired or not superuser → force re-login
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('userType');
+        localStorage.removeItem('user');
+        router.push('/superuser/login');
+        return;
+      }
+
       if (response.ok) {
         const data = await response.json();
         setSmmmAccounts(data.data || []);
