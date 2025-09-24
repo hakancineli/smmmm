@@ -137,7 +137,12 @@ export default function TaxpayerDetailPage() {
       }
     }
 
-    return { totalDebt, unpaidMonths };
+    // Yeni Kalem (serbest kalem) bekleyenler de borca eklenir
+    const pendingCharges = (taxpayer.charges || [])
+      .filter(ch => String(ch.status).toUpperCase() !== 'PAID')
+      .reduce((s, ch) => s + Number(ch.amount || 0), 0);
+
+    return { totalDebt: totalDebt + pendingCharges, unpaidMonths };
   };
 
   const exportPaymentsAsCSV = () => {
