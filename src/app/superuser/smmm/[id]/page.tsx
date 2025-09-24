@@ -24,6 +24,8 @@ export default function SMMMDetailPage() {
   const [detail, setDetail] = useState<SMMMDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -81,6 +83,30 @@ export default function SMMMDetailPage() {
               <p className="text-sm text-gray-600">{detail.companyName}</p>
             </div>
             <div className="flex items-center space-x-2">
+              <button
+                onClick={async () => {
+                  try {
+                    setIsResetting(true);
+                    const token = localStorage.getItem('accessToken');
+                    const res = await fetch(`/api/superuser/smmm/${id}`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                      body: JSON.stringify({ action: 'RESET_PASSWORD' }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data?.error || 'İşlem başarısız');
+                    setTempPassword(data.tempPassword);
+                  } catch (e: any) {
+                    alert(e.message || 'Hata');
+                  } finally {
+                    setIsResetting(false);
+                  }
+                }}
+                className="btn btn-primary"
+                disabled={isResetting}
+              >
+                {isResetting ? 'Oluşturuluyor…' : 'Geçici Şifre Oluştur'}
+              </button>
               <button onClick={() => router.back()} className="btn btn-outline">Geri</button>
             </div>
           </div>
@@ -99,6 +125,12 @@ export default function SMMMDetailPage() {
               <div className="flex justify-between"><span className="text-gray-600">Durum</span><span className={`badge ${detail.isActive ? 'badge-success' : 'badge-danger'}`}>{detail.isActive ? 'Aktif' : 'Pasif'}</span></div>
               <div className="flex justify-between"><span className="text-gray-600">Oluşturulma</span><span className="font-medium">{new Date(detail.createdAt).toLocaleDateString('tr-TR')}</span></div>
               <div className="flex justify-between"><span className="text-gray-600">Mükellef Sayısı</span><span className="font-medium">{detail._count?.taxpayers ?? 0}</span></div>
+              {tempPassword && (
+                <div className="p-3 rounded-md bg-yellow-50 border border-yellow-200">
+                  <div className="text-sm text-yellow-800 mb-1">Geçici Şifre (tek seferlik gösterim):</div>
+                  <div className="font-mono text-lg tracking-wider">{tempPassword}</div>
+                </div>
+              )}
             </div>
           </div>
         </div>
