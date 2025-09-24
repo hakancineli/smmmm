@@ -93,6 +93,33 @@ export default function TaxpayerDetailPage() {
     }
   };
 
+  const deleteTaxpayer = async () => {
+    if (!confirm('Bu mükellefi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`/api/smmm/taxpayers/${taxpayerId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        alert('Mükellef başarıyla silindi');
+        router.push('/smmm/taxpayers');
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Mükellef silinemedi');
+      }
+    } catch (error) {
+      console.error('Mükellef silme hatası:', error);
+      alert('Mükellef silinemedi');
+    }
+  };
+
   const getPaymentStatusText = (status: string) => {
     const s = (status || '').toUpperCase();
     switch (s) {
@@ -337,6 +364,12 @@ export default function TaxpayerDetailPage() {
               >
                 Düzenle
               </Link>
+              <button 
+                onClick={deleteTaxpayer}
+                className="btn btn-danger"
+              >
+                Sil
+              </button>
             </div>
           </div>
         </div>
