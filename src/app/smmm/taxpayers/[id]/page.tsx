@@ -430,6 +430,29 @@ export default function TaxpayerDetailPage() {
                               });
                             }
                           }
+
+                          // İçinde bulunulan ay için hiç kayıt yoksa, bilgilendirme amaçlı sanal satır ekle
+                          const currYear = now.getFullYear();
+                          const currMonth = now.getMonth() + 1;
+                          const hasCurrRecord = list.some(p => p.year === currYear && p.month === currMonth);
+                          if (!hasCurrRecord) {
+                            const paidSumCurr = (taxpayer.payments || [])
+                              .filter(p => p.year === currYear && p.month === currMonth)
+                              .reduce((s, p) => s + Number(p.amount || 0), 0);
+                            const remainingCurr = Math.max(monthlyFee - paidSumCurr, 0);
+                            if (remainingCurr > 0) {
+                              // Bu ay henüz vade gelmemiş olabilir; status 'PENDING'
+                              list.push({
+                                id: `virtual-${taxpayer.id}-${currYear}-${currMonth}`,
+                                year: currYear,
+                                month: currMonth,
+                                amount: remainingCurr,
+                                paymentStatus: 'PENDING',
+                                paymentDate: undefined,
+                                notes: 'Bu ay borcu',
+                              });
+                            }
+                          }
                           return list.sort((a,b)=> b.year - a.year || b.month - a.month);
                         })()
                           .map((payment) => (
