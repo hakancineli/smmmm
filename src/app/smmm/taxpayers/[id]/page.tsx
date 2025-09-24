@@ -829,22 +829,34 @@ function EArsivSection({ taxpayerId, initialUserCode }: { taxpayerId: string; in
   }, [taxpayerId]);
 
   const save = async () => {
-    if (!userCode || !password) return;
+    if (!userCode || !password) {
+      alert('Kullanıcı kodu ve şifre gerekli');
+      return;
+    }
     try {
       const token = localStorage.getItem('accessToken');
+      console.log('Vedop bilgileri kaydediliyor:', { taxpayerId, userCode, password });
       const res = await fetch('/api/smmm/earsiv/credentials', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ taxpayerId, userCode, password })
       });
+      
       if (res.ok) {
+        const data = await res.json();
+        console.log('Vedop bilgileri başarıyla kaydedildi:', data);
         setPassword('');
         setHasPassword(true);
+        setEditMode(false);
         alert('E-Arşiv bilgileri kaydedildi');
+      } else {
+        const errorData = await res.json();
+        console.error('Vedop bilgileri kaydedilemedi:', errorData);
+        alert(`E-Arşiv bilgileri kaydedilemedi: ${errorData.error || 'Bilinmeyen hata'}`);
       }
     } catch (err) {
       console.error('E-Arşiv bilgileri kaydedilemedi:', err);
-      alert('E-Arşiv bilgileri kaydedilemedi');
+      alert(`E-Arşiv bilgileri kaydedilemedi: ${err}`);
     }
   };
 
