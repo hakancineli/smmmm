@@ -153,6 +153,14 @@ export default function SMMMDashboard() {
       if (response.ok) {
         const data = await response.json();
         setTaxpayers(data.data || []);
+      } else if (response.status === 401) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('userType');
+        localStorage.removeItem('user');
+        router.push('/smmm/login?error=auth');
+      } else {
+        setError('Mükellef listesi yüklenemedi');
       }
     } catch (error) {
       console.error('Load taxpayers error:', error);
