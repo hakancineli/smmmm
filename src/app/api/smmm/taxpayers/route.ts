@@ -143,9 +143,11 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Input validation
-    if (!tcNumber || !firstName || !lastName || monthlyFee === undefined) {
+    const hasPersonName = !!firstName && !!lastName;
+    const hasCompany = !!companyName;
+    if (!tcNumber || monthlyFee === undefined || (!hasPersonName && !hasCompany)) {
       return NextResponse.json(
-        { error: 'TC No, ad, soyad ve aylık ücret gereklidir' },
+        { error: 'TC No, aylık ücret ve (ad+soyad) veya (şirket ünvanı) gereklidir' },
         { status: 400 }
       );
     }

@@ -440,15 +440,17 @@ export default function TaxpayersPage() {
       const colUcret = idx('aylık ücret');
       const colVedopUser = idx('vedop kullanıcı kodu');
       const colVedopPass = idx('vedop şifre');
-      if (colAd<0 || colSoyad<0 || colTC<0 || colUcret<0) {
-        return alert('Zorunlu sütunlar eksik: Ad, Soyad, TC No, Aylık Ücret');
+      // Zorunlu başlık: TC No ve Aylık Ücret; ayrıca (Ad+Soyad) veya (Şirket Ünvanı)
+      const hasNameCols = colAd >= 0 && colSoyad >= 0;
+      const hasCompanyCol = colSirket >= 0;
+      if (colTC < 0 || colUcret < 0 || (!hasNameCols && !hasCompanyCol)) {
+        return alert('Zorunlu sütunlar: TC No, Aylık Ücret ve (Ad+Soyad) veya (Şirket Ünvanı)');
       }
       const token = localStorage.getItem('accessToken');
       for (let i=1;i<lines.length;i++) {
         const row = lines[i].split(delimiter);
-        if (!row[colAd]) continue;
-        const firstName = row[colAd]?.trim() || '';
-        const lastName = row[colSoyad]?.trim() || '';
+        const firstName = colAd>=0 ? (row[colAd]?.trim() || '') : '';
+        const lastName = colSoyad>=0 ? (row[colSoyad]?.trim() || '') : '';
         const tcNumber = row[colTC]?.trim() || '';
         const monthlyFee = Number((row[colUcret] || '0').toString().replace(/[^0-9.,]/g,'').replace(',','.')) || 0;
         const taxNumber = colVergi>=0 ? (row[colVergi]?.trim() || undefined) : undefined;
@@ -457,6 +459,14 @@ export default function TaxpayersPage() {
         const phone = colTel>=0 ? (row[colTel]?.trim() || undefined) : undefined;
         const vedopUser = colVedopUser>=0 ? (row[colVedopUser]?.trim() || '') : '';
         const vedopPass = colVedopPass>=0 ? (row[colVedopPass]?.trim() || '') : '';
+
+        // Satır bazında: (Ad+Soyad) veya (Şirket Ünvanı) zorunlu
+        const hasName = (!!firstName && !!lastName);
+        const hasCompany = !!companyName;
+        if (!hasName && !hasCompany) {
+          // Bu satırı atla; kullanıcıya bilgi verilebilir
+          continue;
+        }
 
         // Create taxpayer
         const res = await fetch('/api/smmm/taxpayers', {
