@@ -443,10 +443,9 @@ export default function TaxpayersPage() {
       // Zorunlu başlık: TC No ve Aylık Ücret; ayrıca (Ad+Soyad) veya (Şirket Ünvanı)
       const hasNameCols = colAd >= 0 && colSoyad >= 0;
       const hasCompanyCol = colSirket >= 0;
-      if (colUcret < 0 || (!hasNameCols && !hasCompanyCol) || (hasCompanyCol && idx('vergi no')<0 && idx('vergi no')<0)) {
-        // Not: Şirketler için Vergi No satır bazında kontrol edilecek
+      if (colUcret < 0 || (!hasNameCols && !hasCompanyCol)) {
         // Şablon genel kontrolü: Aylık Ücret ve (Ad+Soyad) veya (Şirket Ünvanı) olmalı
-        return alert('Zorunlu: Aylık Ücret ve (Ad+Soyad) veya (Şirket Ünvanı). Şirketlerde Vergi No da zorunludur.');
+        return alert('Zorunlu: Aylık Ücret ve (Ad+Soyad) veya (Şirket Ünvanı)');
       }
       const token = localStorage.getItem('accessToken');
       for (let i=1;i<lines.length;i++) {
@@ -469,9 +468,8 @@ export default function TaxpayersPage() {
           // Bu satırı atla; kullanıcıya bilgi verilebilir
           continue;
         }
-        // Şirketse Vergi No zorunlu, kişiyse TC zorunlu
-        if (hasCompany && !taxNumber) continue;
-        if (!hasCompany && !tcNumber) continue;
+        // Kimlik: TC veya Vergi No'dan en az biri olmalı
+        if (!tcNumber && !taxNumber) continue;
 
         // Create taxpayer
         const res = await fetch('/api/smmm/taxpayers', {

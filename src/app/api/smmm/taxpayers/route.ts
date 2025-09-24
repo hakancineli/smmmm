@@ -153,22 +153,12 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    // Rule: Person -> TC required; Company -> Tax Number required
-    if (hasCompany) {
-      if (!taxNumber) {
-        return NextResponse.json(
-          { error: 'Şirketler için Vergi No gereklidir' },
-          { status: 400 }
-        );
-      }
-    } else {
-      if (!tcNumber) {
-        return NextResponse.json(
-          { error: 'Gerçek kişiler için TC No gereklidir' },
-          { status: 400 }
-        );
-      }
+    // Kimlik numarası kuralı: TC veya Vergi No'dan en az biri gereklidir
+    if (!tcNumber && !taxNumber) {
+      return NextResponse.json(
+        { error: 'TC No veya Vergi No’dan en az biri gereklidir' },
+        { status: 400 }
+      );
     }
 
     // TC No validation
@@ -199,6 +189,21 @@ export async function POST(request: NextRequest) {
       if (existingTaxpayer) {
         return NextResponse.json(
           { error: 'Bu TC Kimlik No zaten kayıtlı' },
+          { status: 409 }
+        );
+      }
+    }
+    // Tax Number uniqueness check within the same SMMM
+    if (taxNumber) {
+      const existingTaxNumber = await prisma.taxpayer.findFirst({
+        where: {
+          taxNumber,
+          smmmId: payload.id
+        }
+      });
+      if (existingTaxNumber) {
+        return NextResponse.json(
+          { error: 'Bu Vergi No zaten kayıtlı' },
           { status: 409 }
         );
       }
