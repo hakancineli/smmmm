@@ -247,9 +247,9 @@ export default function SuperuserDashboard() {
                         </td>
                         <td className="table-cell">
                           <div className="flex space-x-2">
-                            <button className="btn btn-outline btn-sm">
+                            <Link href={`/superuser/smmm/${account.id}/edit`} className="btn btn-outline btn-sm">
                               Düzenle
-                            </button>
+                            </Link>
                             <Link href={`/superuser/smmm/${account.id}`} className="btn btn-outline btn-sm">
                               Detay
                             </Link>
