@@ -370,29 +370,33 @@ export default function TaxpayerDetailPage() {
                       <tbody className="table-body">
                         {(() => {
                           const list = [...taxpayer.payments];
+                          const monthlyFee = Number(taxpayer.monthlyFee || 0);
                           const now = new Date();
-                          const target = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                          const ty = target.getFullYear();
-                          const tm = target.getMonth() + 1;
-                          // Partial payment: compute remaining for previous month
-                          const paidSum = list
-                            .filter(p => p.year === ty && p.month === tm && p.paymentStatus === 'PAID')
-                            .reduce((s, p) => s + Number(p.amount || 0), 0);
-                          const remaining = Math.max(Number(taxpayer.monthlyFee || 0) - paidSum, 0);
-                          const hasAnyRecord = list.some(p => p.year === ty && p.month === tm);
-                          if (remaining > 0) {
-                            list.push({
-                              id: `virtual-${taxpayer.id}-${ty}-${tm}`,
-                              year: ty,
-                              month: tm,
-                              amount: remaining,
-                              paymentStatus: now.getDate() > 20 ? 'OVERDUE' : 'PENDING',
-                              paymentDate: undefined,
-                              notes: 'Kalan bakiye',
-                            });
-                          } else if (!hasAnyRecord) {
-                            // No payment needed and no rows – optional to add paid row of 0
-                          }
+                          // Tüm yıl-aylar için kısmi ödeme kalanı sanal satır ekle
+                          const key = (y: number, m: number) => `${y}-${m}`;
+                          const uniqMonths = new Set<string>();
+                          list.forEach(p => uniqMonths.add(key(p.year, p.month)));
+                          uniqMonths.forEach(k => {
+                            const [yStr, mStr] = k.split('-');
+                            const y = Number(yStr); const m = Number(mStr);
+                            const paidSum = list
+                              .filter(p => p.year === y && p.month === m && p.paymentStatus === 'PAID')
+                              .reduce((s, p) => s + Number(p.amount || 0), 0);
+                            const remaining = Math.max(monthlyFee - paidSum, 0);
+                            if (remaining > 0) {
+                              const monthDate = new Date(y, m - 1, 21);
+                              const isOverdue = now > monthDate;
+                              list.push({
+                                id: `virtual-${taxpayer.id}-${y}-${m}`,
+                                year: y,
+                                month: m,
+                                amount: remaining,
+                                paymentStatus: isOverdue ? 'OVERDUE' : 'PENDING',
+                                paymentDate: undefined,
+                                notes: 'Kalan bakiye',
+                              });
+                            }
+                          });
                           return list.sort((a,b)=> b.year - a.year || b.month - a.month);
                         })()
                           .map((payment) => (
