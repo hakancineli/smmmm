@@ -831,22 +831,162 @@ function EArsivSection({ taxpayerId, initialUserCode }: { taxpayerId: string; in
             rel="noreferrer"
             className="btn btn-outline flex-1 min-w-[180px]"
             onClick={(e) => {
-              if (!userCode || !password) {
-                e.preventDefault();
-                alert('Önce kullanıcı kodu ve şifre girin');
-                return;
-              }
+              // Eğer hasPassword true ise, kayıtlı bilgiler var demektir
+              if (hasPassword) {
+                // Kayıtlı bilgileri API'den al
+                fetch(`/api/smmm/earsiv/credentials?taxpayerId=${taxpayerId}`)
+                  .then(res => res.json())
+                  .then(data => {
+                    if (data.success && data.credential) {
+                      const portalUrl = `https://earsivportal.efatura.gov.tr/intragiris.html?userCode=${encodeURIComponent(data.credential.userCode)}&password=${encodeURIComponent('********')}`;
+                      const newWindow = window.open(portalUrl, '_blank');
+                      
+                      if (newWindow) {
+                        // Script yüklendikten sonra form doldurma kodunu çalıştır
+                        newWindow.addEventListener('load', () => {
+                          const script = newWindow.document.createElement('script');
+                          script.textContent = `
+                            (function() {
+                              const urlParams = new URLSearchParams(window.location.search);
+                              const userCode = urlParams.get('userCode');
+                              const password = urlParams.get('password');
+                              
+                              if (userCode && password) {
+                                function fillForm() {
+                            // Tüm input alanlarını bul
+                            const allInputs = document.querySelectorAll('input');
+                            console.log('Bulunan input alanları:', allInputs.length);
+                            
+                            // Kullanıcı kodu için daha geniş arama
+                            const userCodeInputs = [
+                              ...Array.from(allInputs).filter(input => 
+                                input.name && (
+                                  input.name.toLowerCase().includes('kullanici') ||
+                                  input.name.toLowerCase().includes('user') ||
+                                  input.name.toLowerCase().includes('username') ||
+                                  input.name.toLowerCase().includes('kod')
+                                )
+                              ),
+                              ...Array.from(allInputs).filter(input => 
+                                input.placeholder && (
+                                  input.placeholder.toLowerCase().includes('kullanıcı') ||
+                                  input.placeholder.toLowerCase().includes('user') ||
+                                  input.placeholder.toLowerCase().includes('kod')
+                                )
+                              ),
+                              ...Array.from(allInputs).filter(input => 
+                                input.type === 'text' && !input.name?.toLowerCase().includes('password')
+                              )
+                            ].filter(Boolean);
+                            
+                            // Şifre için daha geniş arama
+                            const passwordInputs = [
+                              ...Array.from(allInputs).filter(input => 
+                                input.name && (
+                                  input.name.toLowerCase().includes('sifre') ||
+                                  input.name.toLowerCase().includes('password') ||
+                                  input.name.toLowerCase().includes('pass')
+                                )
+                              ),
+                              ...Array.from(allInputs).filter(input => 
+                                input.type === 'password'
+                              )
+                            ].filter(Boolean);
+                            
+                            console.log('Kullanıcı kodu alanları:', userCodeInputs.length);
+                            console.log('Şifre alanları:', passwordInputs.length);
+                            
+                            // Kullanıcı kodu alanını doldur
+                            if (userCodeInputs.length > 0) {
+                              userCodeInputs[0].value = userCode;
+                              userCodeInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+                              userCodeInputs[0].dispatchEvent(new Event('change', { bubbles: true }));
+                              console.log('Kullanıcı kodu dolduruldu:', userCode);
+                            }
+                            
+                            // Şifre alanını doldur
+                            if (passwordInputs.length > 0) {
+                              passwordInputs[0].value = password;
+                              passwordInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+                              passwordInputs[0].dispatchEvent(new Event('change', { bubbles: true }));
+                              console.log('Şifre dolduruldu');
+                            }
+                            
+                            // Giriş butonunu bul ve tıkla
+                            const submitButtons = [
+                              ...Array.from(document.querySelectorAll('button')).filter(btn => 
+                                btn.textContent && (
+                                  btn.textContent.toLowerCase().includes('giriş') ||
+                                  btn.textContent.toLowerCase().includes('login') ||
+                                  btn.textContent.toLowerCase().includes('giriş yap')
+                                )
+                              ),
+                              ...Array.from(document.querySelectorAll('input[type="submit"]')),
+                              ...Array.from(document.querySelectorAll('button[type="submit"]'))
+                            ].filter(Boolean);
+                            
+                            if (submitButtons.length > 0) {
+                              console.log('Giriş butonu bulundu, tıklanacak...');
+                              setTimeout(() => {
+                                submitButtons[0].click();
+                              }, 500);
+                            }
+                          }
+                          
+                          // Farklı zamanlarda tekrar dene
+                          setTimeout(fillForm, 1000);
+                          setTimeout(fillForm, 3000);
+                          setTimeout(fillForm, 5000);
+                          setTimeout(fillForm, 8000);
+                          
+                          // Observer ile dinamik içerik değişikliklerini takip et
+                          const observer = new MutationObserver(() => {
+                            fillForm();
+                          });
+                          
+                          observer.observe(document.body, {
+                            childList: true,
+                            subtree: true,
+                            attributes: true
+                          });
+                          
+                          // 10 saniye sonra observer'ı durdur
+                          setTimeout(() => {
+                            observer.disconnect();
+                          }, 10000);
+                        }
+                      })();
+                    `;
+                    newWindow.document.head.appendChild(script);
+                  });
+                }
+              })
+              .catch(err => {
+                console.error('Vedop bilgileri alınamadı:', err);
+                alert('Vedop bilgileri alınamadı');
+              });
               
-              // Portal sayfasını aç ve form doldurma scriptini yükle
-              const portalUrl = `https://earsivportal.efatura.gov.tr/intragiris.html?userCode=${encodeURIComponent(userCode)}&password=${encodeURIComponent(password)}`;
-              const newWindow = window.open(portalUrl, '_blank');
-              
-              if (newWindow) {
-                // Script yüklendikten sonra form doldurma kodunu çalıştır
-                newWindow.addEventListener('load', () => {
-                  const script = newWindow.document.createElement('script');
-                  script.textContent = `
-                    (function() {
+              e.preventDefault();
+              return;
+            }
+            
+            // Eğer hasPassword false ise, form alanları boş demektir
+            if (!userCode || !password) {
+              e.preventDefault();
+              alert('Önce kullanıcı kodu ve şifre girin');
+              return;
+            }
+            
+            // Portal sayfasını aç ve form doldurma scriptini yükle
+            const portalUrl = `https://earsivportal.efatura.gov.tr/intragiris.html?userCode=${encodeURIComponent(userCode)}&password=${encodeURIComponent(password)}`;
+            const newWindow = window.open(portalUrl, '_blank');
+            
+            if (newWindow) {
+              // Script yüklendikten sonra form doldurma kodunu çalıştır
+              newWindow.addEventListener('load', () => {
+                const script = newWindow.document.createElement('script');
+                script.textContent = `
+                  (function() {
                       const urlParams = new URLSearchParams(window.location.search);
                       const userCode = urlParams.get('userCode');
                       const password = urlParams.get('password');
