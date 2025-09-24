@@ -63,10 +63,16 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: 'desc' },
         include: {
           payments: {
-            where: {
-              year: new Date().getFullYear(),
-            },
-            orderBy: { month: 'desc' },
+            // Bir önceki ayın yılına göre filtrele (Ocak'ta bir önceki yıl Aralık olabilir)
+            where: (() => {
+              const now = new Date();
+              const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+              return { year: prev.getFullYear() } as any;
+            })(),
+            orderBy: [
+              { year: 'desc' },
+              { month: 'desc' }
+            ],
           },
           charges: {
             where: { status: 'PENDING' },

@@ -189,8 +189,9 @@ export default function SMMMDashboard() {
     const charges = (taxpayer as any).charges || [];
     const monthlyFee = Number((taxpayer as any).monthlyFee || 0);
     const now = new Date();
-    const year = now.getFullYear();
-    const prevMonth = new Date(year, now.getMonth() - 1, 1).getMonth() + 1;
+    const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const year = prev.getFullYear();
+    const prevMonth = prev.getMonth() + 1;
 
     let unpaidTotal = 0;
     for (let m = 1; m <= prevMonth; m++) {
