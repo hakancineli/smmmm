@@ -45,9 +45,18 @@ interface ChargeItem {
   taxpayer: { id: string; firstName: string; lastName: string; tcNumber: string };
 }
 
+interface TaxpayerLite {
+  id: string;
+  firstName: string;
+  lastName: string;
+  tcNumber: string;
+  monthlyFee: number;
+}
+
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [charges, setCharges] = useState<ChargeItem[]>([]);
+  const [taxpayers, setTaxpayers] = useState<TaxpayerLite[]>([]);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -104,6 +113,12 @@ export default function PaymentsPage() {
         const data: PaginatedResponse = await response.json();
         setPayments(data.data);
         setPagination(data.pagination);
+        // Fetch taxpayers for virtual rows (previous month logic)
+        const tpRes = await fetch(`/api/smmm/taxpayers?page=1&limit=1000`, { headers: { 'Authorization': `Bearer ${token}` } });
+        if (tpRes.ok) {
+          const tpd = await tpRes.json();
+          setTaxpayers((tpd.data || []).map((t: any) => ({ id: t.id, firstName: t.firstName, lastName: t.lastName, tcNumber: t.tcNumber, monthlyFee: Number(t.monthlyFee || 0) })));
+        }
         // fetch pending charges for context
         const chargesRes = await fetch(`/api/smmm/charges?status=PENDING`, { headers: { 'Authorization': `Bearer ${token}` } });
         if (chargesRes.ok) {
@@ -276,7 +291,7 @@ export default function PaymentsPage() {
             </h2>
           </div>
           <div className="card-body p-0">
-            {payments.length === 0 ? (
+            {payments.length === 0 && taxpayers.length === 0 ? (
               <div className="empty-state py-12">
                 <div className="empty-state-icon">
                   <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -304,7 +319,41 @@ export default function PaymentsPage() {
                     </tr>
                   </thead>
                   <tbody className="table-body">
-                    {payments.map((payment) => (
+                    {(() => {
+                      // Merge real payments with virtual rows for the selected month (previous month by default)
+                      const list: Payment[] = [...payments];
+                      const year = Number(filters.year);
+                      const month = Number(filters.month || '0');
+                      const considerVirtual = Boolean(month);
+                      if (considerVirtual && taxpayers.length > 0) {
+                        const now = new Date();
+                        const overdue = now.getDate() > 20;
+                        taxpayers.forEach(tp => {
+                          // Sum paid amounts for this taxpayer for selected year-month
+                          const paidSum = payments
+                            .filter(p => p.taxpayer.id === tp.id && p.year === year && p.month === month && p.paymentStatus === 'PAID')
+                            .reduce((s, p) => s + Number(p.amount || 0), 0);
+                          const remaining = Math.max(Number(tp.monthlyFee || 0) - paidSum, 0);
+                          const hasAnyRecord = payments.some(p => p.taxpayer.id === tp.id && p.year === year && p.month === month);
+                          if (remaining > 0) {
+                            list.push({
+                              id: `virtual-${tp.id}-${year}-${month}`,
+                              year,
+                              month,
+                              amount: remaining,
+                              paymentStatus: overdue ? 'OVERDUE' : 'PENDING',
+                              paymentDate: undefined,
+                              notes: '',
+                              createdAt: new Date().toISOString(),
+                              taxpayer: { id: tp.id, firstName: tp.firstName, lastName: tp.lastName, tcNumber: tp.tcNumber, monthlyFee: tp.monthlyFee },
+                            } as Payment);
+                          } else if (!hasAnyRecord) {
+                            // nothing to add
+                          }
+                        });
+                      }
+                      return list.sort((a,b)=> a.taxpayer.lastName.localeCompare(b.taxpayer.lastName) || a.taxpayer.firstName.localeCompare(b.taxpayer.firstName));
+                    })().map((payment) => (
                       <tr key={payment.id} className="table-row">
                         <td className="table-cell font-medium">
                           {payment.taxpayer.firstName} {payment.taxpayer.lastName}
