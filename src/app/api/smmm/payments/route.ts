@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if payment already exists
+    // Check if payment already exists (same month)
     const existingPayment = await prisma.payment.findUnique({
       where: {
         taxpayerId_year_month: {
@@ -179,10 +179,26 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingPayment) {
-      return NextResponse.json(
-        { error: 'Bu ay için ödeme kaydı zaten mevcut' },
-        { status: 409 }
-      );
+      // Partial payment: increment amount instead of rejecting
+      const taxpayerForFee = await prisma.taxpayer.findFirst({ where: { id: taxpayerId }, select: { monthlyFee: true } });
+      const monthlyFeeNumber = Number(taxpayerForFee?.monthlyFee || 0);
+      const newAmountTotal = Number(existingPayment.amount) + numericAmount;
+      const newStatus = newAmountTotal >= monthlyFeeNumber ? PaymentStatus.PAID : (paymentStatus || existingPayment.paymentStatus);
+      const updated = await prisma.payment.update({
+        where: { id: existingPayment.id },
+        data: {
+          amount: newAmountTotal,
+          paymentStatus: newStatus,
+          paymentDate: newStatus === PaymentStatus.PAID ? new Date(paymentDate || new Date()) : existingPayment.paymentDate,
+          notes: notes ?? existingPayment.notes,
+        },
+        include: {
+          taxpayer: {
+            select: { id: true, tcNumber: true, firstName: true, lastName: true, monthlyFee: true },
+          },
+        },
+      });
+      return NextResponse.json({ success: true, message: 'Ödeme güncellendi', data: updated });
     }
 
     // Create payment
