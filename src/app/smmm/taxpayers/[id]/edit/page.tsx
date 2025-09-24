@@ -143,13 +143,23 @@ export default function EditTaxpayerPage() {
         // Save Vedop credentials if provided
         if (vedopData.userCode && vedopData.password) {
           try {
-            await fetch('/api/smmm/earsiv/credentials', {
+            console.log('Vedop bilgileri kaydediliyor:', { taxpayerId, userCode: vedopData.userCode, password: vedopData.password });
+            const vedopResponse = await fetch('/api/smmm/earsiv/credentials', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
               body: JSON.stringify({ taxpayerId, userCode: vedopData.userCode, password: vedopData.password })
             });
+            
+            if (vedopResponse.ok) {
+              console.log('Vedop bilgileri başarıyla kaydedildi');
+            } else {
+              const vedopError = await vedopResponse.json();
+              console.error('Vedop bilgileri kaydedilemedi:', vedopError);
+              setError(`Vedop bilgileri kaydedilemedi: ${vedopError.error || 'Bilinmeyen hata'}`);
+            }
           } catch (err) {
             console.error('Vedop bilgileri kaydedilemedi:', err);
+            setError(`Vedop bilgileri kaydedilemedi: ${err}`);
           }
         }
         
