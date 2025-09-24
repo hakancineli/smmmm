@@ -206,6 +206,18 @@ export default function SMMMDashboard() {
       unpaidTotal += remaining;
     }
 
+    // Yeni mükellef ise (hiç ödeme kaydı yoksa) sadece bu ayın kalanını göster
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    const currentPaidSumBootstrap = payments
+      .filter((p: any) => p.year === currentYear && p.month === currentMonth)
+      .reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+    const currentRemainingBootstrap = Math.max(monthlyFee - currentPaidSumBootstrap, 0);
+    if ((payments || []).length === 0) {
+      const totalBootstrap = currentRemainingBootstrap + (charges || []).filter((c: any) => String(c.status).toUpperCase() !== 'PAID').reduce((s: number, c: any) => s + Number(c.amount || 0), 0);
+      return { total: totalBootstrap, unpaid: totalBootstrap };
+    }
+
     // 2) Gelecek ay(lar) için kayıt girilmişse ve kısmi ödeme kalmışsa onları da ekle
     const futureMonthsSet = new Set<number>(
       payments
@@ -234,8 +246,6 @@ export default function SMMMDashboard() {
 
     const totalDebt = unpaidTotal + pendingCharges;
     // İçinde bulunulan ay için kalan borcu da toplam borca dahil et (mükellef bu ay oluşturulduysa bu ay dahil edilir)
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1;
     const currentPaidSum = payments
       .filter((p: any) => p.year === currentYear && p.month === currentMonth)
       .reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
