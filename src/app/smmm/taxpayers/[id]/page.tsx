@@ -804,6 +804,30 @@ function EArsivSection({ taxpayerId, initialUserCode }: { taxpayerId: string; in
     }
   }, [initialUserCode]);
 
+  // Force refresh when taxpayer changes (after CSV import)
+  useEffect(() => {
+    if (taxpayerId) {
+      const fetchCredential = async () => {
+        try {
+          const token = localStorage.getItem('accessToken');
+          const res = await fetch(`/api/smmm/earsiv/credentials?taxpayerId=${taxpayerId}` , {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const json = await res.json();
+            if (json?.data) {
+              if (json.data.userCode) setUserCode(json.data.userCode);
+              setHasPassword(!!json.data.hasPassword);
+            }
+          }
+        } catch (err) {
+          console.error('Vedop bilgileri alınamadı:', err);
+        }
+      };
+      fetchCredential();
+    }
+  }, [taxpayerId]);
+
   const save = async () => {
     if (!userCode || !password) return;
     try {
