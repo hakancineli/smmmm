@@ -13,6 +13,15 @@ export default function SMMMLoginPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
+  // If already logged in on this device, redirect to dashboard
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    const userType = localStorage.getItem('userType');
+    if (token && userType === 'smmm') {
+      router.replace('/smmm/dashboard');
+    }
+  }, [router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);

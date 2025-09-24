@@ -12,7 +12,7 @@ export default function SMMMRegisterPage() {
     username: '',
     password: '',
     email: '',
-    phone: '',
+    phone: '+90',
   });
 
   async function handleSubmit(e: React.FormEvent) {

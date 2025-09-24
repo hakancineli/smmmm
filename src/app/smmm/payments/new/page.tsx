@@ -31,6 +31,9 @@ function NewPaymentForm() {
     };
   });
 
+  // Kalan bakiye ipucu
+  const [remainingHint, setRemainingHint] = useState<string | null>(null);
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const taxpayerId = searchParams.get('taxpayerId');
@@ -69,6 +72,12 @@ function NewPaymentForm() {
           ...prev,
           amount: t.monthlyFee ? t.monthlyFee.toString() : '0',
         }));
+        // mevcut ay için ödenenleri topla ve kalan bakiyeyi hesapla
+        const paidThisMonth = (t.payments || [])
+          .filter((p: any) => p.year === prevMonthYear() && p.month === prevMonthMonth() && p.paymentStatus === 'PAID')
+          .reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+        const remaining = Math.max(Number(t.monthlyFee || 0) - paidThisMonth, 0);
+        if (remaining > 0) setRemainingHint(`Bu ay kalan bakiye: ₺${remaining.toLocaleString('tr-TR')}`);
       } else {
         const errorData = await response.json();
         console.error('API Error:', errorData);
@@ -79,6 +88,17 @@ function NewPaymentForm() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const prevMonthYear = () => {
+    const now = new Date();
+    const target = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return target.getFullYear();
+  };
+  const prevMonthMonth = () => {
+    const now = new Date();
+    const target = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return target.getMonth() + 1;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -173,6 +193,13 @@ function NewPaymentForm() {
             <div className="card-body">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {remainingHint && (
+                    <div className="md:col-span-2 -mt-2">
+                      <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-3 py-2 rounded-md text-sm">
+                        {remainingHint}
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <label htmlFor="year" className="block text-sm font-medium text-gray-700">
                       Yıl *
