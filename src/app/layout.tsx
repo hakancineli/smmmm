@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   keywords: ['SMMM', 'CRM', 'Mükellef Yönetimi', 'E-Devlet', 'Mali Müşavir'],
   authors: [{ name: 'SMMM Mükellef CRM' }],
   robots: 'noindex, nofollow', // Development için
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export const viewport = {

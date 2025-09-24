@@ -76,6 +76,13 @@ export default function TaxpayerDetailPage() {
         const data = await response.json();
         setTaxpayer(data.taxpayer);
       } else {
+        if (response.status === 401) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('userType');
+          router.push('/smmm/login?error=auth');
+          return;
+        }
         setError('Mükellef bilgileri yüklenemedi');
       }
     } catch (error) {
