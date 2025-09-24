@@ -443,15 +443,17 @@ export default function TaxpayersPage() {
       // Zorunlu başlık: TC No ve Aylık Ücret; ayrıca (Ad+Soyad) veya (Şirket Ünvanı)
       const hasNameCols = colAd >= 0 && colSoyad >= 0;
       const hasCompanyCol = colSirket >= 0;
-      if (colTC < 0 || colUcret < 0 || (!hasNameCols && !hasCompanyCol)) {
-        return alert('Zorunlu sütunlar: TC No, Aylık Ücret ve (Ad+Soyad) veya (Şirket Ünvanı)');
+      if (colUcret < 0 || (!hasNameCols && !hasCompanyCol) || (hasCompanyCol && idx('vergi no')<0 && idx('vergi no')<0)) {
+        // Not: Şirketler için Vergi No satır bazında kontrol edilecek
+        // Şablon genel kontrolü: Aylık Ücret ve (Ad+Soyad) veya (Şirket Ünvanı) olmalı
+        return alert('Zorunlu: Aylık Ücret ve (Ad+Soyad) veya (Şirket Ünvanı). Şirketlerde Vergi No da zorunludur.');
       }
       const token = localStorage.getItem('accessToken');
       for (let i=1;i<lines.length;i++) {
         const row = lines[i].split(delimiter);
         const firstName = colAd>=0 ? (row[colAd]?.trim() || '') : '';
         const lastName = colSoyad>=0 ? (row[colSoyad]?.trim() || '') : '';
-        const tcNumber = row[colTC]?.trim() || '';
+        const tcNumber = colTC>=0 ? (row[colTC]?.trim() || '') : '';
         const monthlyFee = Number((row[colUcret] || '0').toString().replace(/[^0-9.,]/g,'').replace(',','.')) || 0;
         const taxNumber = colVergi>=0 ? (row[colVergi]?.trim() || undefined) : undefined;
         const companyName = colSirket>=0 ? (row[colSirket]?.trim() || undefined) : undefined;
@@ -467,6 +469,9 @@ export default function TaxpayersPage() {
           // Bu satırı atla; kullanıcıya bilgi verilebilir
           continue;
         }
+        // Şirketse Vergi No zorunlu, kişiyse TC zorunlu
+        if (hasCompany && !taxNumber) continue;
+        if (!hasCompany && !tcNumber) continue;
 
         // Create taxpayer
         const res = await fetch('/api/smmm/taxpayers', {

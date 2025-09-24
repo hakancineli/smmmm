@@ -48,7 +48,7 @@ model SMMMAccount {
 model Taxpayer {
   id          String              @id @default(uuid())
   smmmId      String              @map("smmm_id")
-  tcNumber    String              @unique @map("tc_number")
+  tcNumber    String?             @unique @map("tc_number")
   taxNumber   String?             @map("tax_number")
   firstName   String              @map("first_name")
   lastName    String              @map("last_name")

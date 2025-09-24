@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
 
     const body: CreateTaxpayerRequest = await request.json();
     const {
-      tcNumber,
+      tcNumber: rawTcNumber,
       taxNumber,
       firstName,
       lastName,
@@ -142,18 +142,37 @@ export async function POST(request: NextRequest) {
       monthlyFee
     } = body;
 
+    const tcNumber = (rawTcNumber || '').trim() || undefined;
+
     // Input validation
     const hasPersonName = !!firstName && !!lastName;
     const hasCompany = !!companyName;
-    if (!tcNumber || monthlyFee === undefined || (!hasPersonName && !hasCompany)) {
+    if (monthlyFee === undefined || (!hasPersonName && !hasCompany)) {
       return NextResponse.json(
-        { error: 'TC No, aylık ücret ve (ad+soyad) veya (şirket ünvanı) gereklidir' },
+        { error: 'Aylık ücret ve (ad+soyad) veya (şirket ünvanı) gereklidir' },
         { status: 400 }
       );
     }
 
+    // Rule: Person -> TC required; Company -> Tax Number required
+    if (hasCompany) {
+      if (!taxNumber) {
+        return NextResponse.json(
+          { error: 'Şirketler için Vergi No gereklidir' },
+          { status: 400 }
+        );
+      }
+    } else {
+      if (!tcNumber) {
+        return NextResponse.json(
+          { error: 'Gerçek kişiler için TC No gereklidir' },
+          { status: 400 }
+        );
+      }
+    }
+
     // TC No validation
-    if (!validateTCNumber(tcNumber)) {
+    if (tcNumber && !validateTCNumber(tcNumber)) {
       return NextResponse.json(
         { error: 'Geçersiz TC Kimlik No' },
         { status: 400 }
@@ -169,18 +188,20 @@ export async function POST(request: NextRequest) {
     }
 
     // TC No uniqueness check within the same SMMM
-    const existingTaxpayer = await prisma.taxpayer.findFirst({
-      where: { 
-        tcNumber,
-        smmmId: payload.id
-      },
-    });
+    if (tcNumber) {
+      const existingTaxpayer = await prisma.taxpayer.findFirst({
+        where: { 
+          tcNumber,
+          smmmId: payload.id
+        },
+      });
 
-    if (existingTaxpayer) {
-      return NextResponse.json(
-        { error: 'Bu TC Kimlik No zaten kayıtlı' },
-        { status: 409 }
-      );
+      if (existingTaxpayer) {
+        return NextResponse.json(
+          { error: 'Bu TC Kimlik No zaten kayıtlı' },
+          { status: 409 }
+        );
+      }
     }
 
     // Tax Number uniqueness check within the same SMMM (if provided)
