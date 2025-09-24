@@ -36,6 +36,7 @@ model SMMMAccount {
   charges          ChargeItem[]
   credentials      EDevletCredential[]
   payments         Payment[]
+  notes            TaxpayerNote[]
   superuser        Superuser           @relation(fields: [superuserId], references: [id], onDelete: Cascade)
   taxpayers        Taxpayer[]
 
@@ -61,6 +62,7 @@ model Taxpayer {
   documents   Document[]
   credentials EDevletCredential[]
   payments    Payment[]
+  notes       TaxpayerNote[]
   smmm        SMMMAccount         @relation(fields: [smmmId], references: [id], onDelete: Cascade)
 
   @@map("taxpayers")
@@ -187,4 +189,19 @@ enum ChargeStatus {
   PENDING
   PAID
   CANCELLED
+}
+
+model TaxpayerNote {
+  id         String       @id @default(uuid())
+  taxpayerId String       @map("taxpayer_id")
+  smmmId     String       @map("smmm_id")
+  text       String
+  isDone     Boolean      @default(false) @map("is_done")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+
+  taxpayer   Taxpayer     @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
+  smmm       SMMMAccount  @relation(fields: [smmmId], references: [id], onDelete: Cascade)
+
+  @@map("taxpayer_notes")
 }

@@ -41,6 +41,9 @@ export async function GET(
             { month: 'desc' }
           ]
         },
+        notes: {
+          orderBy: { createdAt: 'desc' }
+        },
         charges: {
           orderBy: { createdAt: 'desc' }
         }

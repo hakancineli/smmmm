@@ -36,6 +36,12 @@ interface Taxpayer {
     dueDate?: string;
     createdAt: string;
   }[];
+  notes?: {
+    id: string;
+    text: string;
+    isDone: boolean;
+    createdAt: string;
+  }[];
 }
 
 export default function TaxpayerDetailPage() {
@@ -704,8 +710,105 @@ export default function TaxpayerDetailPage() {
                 </Link>
               </div>
             </div>
+
+            {/* Notlar / To-Do */}
+            <NotesSection taxpayerId={taxpayer.id} initialNotes={taxpayer.notes || []} onChanged={loadTaxpayerDetail} />
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function NotesSection({ taxpayerId, initialNotes, onChanged }: { taxpayerId: string; initialNotes: { id: string; text: string; isDone: boolean; createdAt: string; }[]; onChanged: () => Promise<void>; }) {
+  const [notes, setNotes] = useState(initialNotes);
+  const [newText, setNewText] = useState('');
+  useEffect(() => { setNotes(initialNotes); }, [initialNotes]);
+
+  const addNote = async () => {
+    const text = newText.trim();
+    if (!text) return;
+    try {
+      const token = localStorage.getItem('accessToken');
+      const res = await fetch('/api/smmm/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ taxpayerId, text })
+      });
+      if (res.ok) {
+        setNewText('');
+        await onChanged();
+      }
+    } catch {}
+  };
+
+  const toggleNote = async (id: string, isDone: boolean) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const res = await fetch('/api/smmm/notes', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id, isDone })
+      });
+      if (res.ok) {
+        await onChanged();
+      }
+    } catch {}
+  };
+
+  const deleteNote = async (id: string) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const res = await fetch(`/api/smmm/notes?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        await onChanged();
+      }
+    } catch {}
+  };
+
+  return (
+    <div className="card">
+      <div className="card-header">
+        <h2 className="text-lg font-semibold text-gray-900">Notlar / To-Do</h2>
+      </div>
+      <div className="card-body space-y-3">
+        <div className="flex gap-2">
+          <input
+            value={newText}
+            onChange={(e) => setNewText(e.target.value)}
+            placeholder="Yeni not ekle..."
+            className="input input-bordered flex-1"
+          />
+          <button className="btn btn-primary" onClick={addNote}>Ekle</button>
+        </div>
+        {(!notes || notes.length === 0) ? (
+          <p className="text-sm text-gray-500">Henüz not yok.</p>
+        ) : (
+          <ul className="divide-y divide-gray-200">
+            {notes.map(n => (
+              <li key={n.id} className="py-2 flex items-center justify-between">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-sm"
+                    checked={!!n.isDone}
+                    onChange={(e) => toggleNote(n.id, e.target.checked)}
+                  />
+                  <span className={`text-sm ${n.isDone ? 'line-through text-gray-400' : 'text-gray-800'}`}>{n.text}</span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400 hidden sm:inline">
+                    {new Date(n.createdAt).toLocaleString('tr-TR')}
+                  </span>
+                  <button className="btn btn-outline btn-xs" onClick={() => deleteNote(n.id)}>Sil</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
