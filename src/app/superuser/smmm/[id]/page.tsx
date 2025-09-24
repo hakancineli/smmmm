@@ -26,6 +26,7 @@ export default function SMMMDetailPage() {
   const [error, setError] = useState('');
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [isResetting, setIsResetting] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -96,6 +97,7 @@ export default function SMMMDetailPage() {
                     const data = await res.json();
                     if (!res.ok) throw new Error(data?.error || 'İşlem başarısız');
                     setTempPassword(data.tempPassword);
+                    setShowModal(true);
                   } catch (e: any) {
                     alert(e.message || 'Hata');
                   } finally {
@@ -114,6 +116,27 @@ export default function SMMMDetailPage() {
       </header>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {showModal && tempPassword && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setShowModal(false)} />
+            <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+              <h3 className="text-lg font-semibold mb-3">Geçici Şifre</h3>
+              <p className="text-sm text-gray-600 mb-2">Bu şifre sadece bir kez gösterilir. Lütfen kopyalayın ve kullanıcıya iletin.</p>
+              <div className="flex items-center justify-between bg-gray-100 rounded px-3 py-2 mb-4">
+                <code className="font-mono text-lg">{tempPassword}</code>
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={() => navigator.clipboard.writeText(tempPassword)}
+                >
+                  Kopyala
+                </button>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <button className="btn btn-primary" onClick={() => setShowModal(false)}>Tamam</button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="card">
             <div className="card-header"><h2 className="text-lg font-semibold">Hesap Bilgileri</h2></div>
