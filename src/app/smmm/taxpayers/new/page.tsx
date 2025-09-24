@@ -16,6 +16,10 @@ export default function NewTaxpayerPage() {
     address: '',
     monthlyFee: '',
   });
+  const [vedopData, setVedopData] = useState({
+    userCode: '',
+    password: '',
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -44,6 +48,21 @@ export default function NewTaxpayerPage() {
       const data = await response.json();
 
       if (response.ok) {
+        const taxpayerId = data?.data?.id;
+        
+        // Save Vedop credentials if provided
+        if (taxpayerId && vedopData.userCode && vedopData.password) {
+          try {
+            await fetch('/api/smmm/earsiv/credentials', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ taxpayerId, userCode: vedopData.userCode, password: vedopData.password })
+            });
+          } catch (err) {
+            console.error('Vedop bilgileri kaydedilemedi:', err);
+          }
+        }
+        
         setSuccess('Mükellef başarıyla eklendi!');
         setFormData({
           tcNumber: '',
@@ -55,6 +74,10 @@ export default function NewTaxpayerPage() {
           phone: '',
           address: '',
           monthlyFee: '',
+        });
+        setVedopData({
+          userCode: '',
+          password: '',
         });
         // Redirect to taxpayers list after 2 seconds
         setTimeout(() => {
@@ -75,6 +98,14 @@ export default function NewTaxpayerPage() {
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const handleVedopChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setVedopData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleLogout = () => {
@@ -276,6 +307,42 @@ export default function NewTaxpayerPage() {
                   onChange={handleChange}
                   placeholder="Adres bilgilerini girin"
                 />
+              </div>
+
+              {/* Vedop Bilgileri */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Vedop Giriş Bilgileri</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="vedopUserCode" className="label">
+                      Vedop Kullanıcı Kodu
+                    </label>
+                    <input
+                      id="vedopUserCode"
+                      name="userCode"
+                      type="text"
+                      className="input"
+                      value={vedopData.userCode}
+                      onChange={handleVedopChange}
+                      placeholder="Vedop kullanıcı kodunu girin"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="vedopPassword" className="label">
+                      Vedop Şifre
+                    </label>
+                    <input
+                      id="vedopPassword"
+                      name="password"
+                      type="password"
+                      className="input"
+                      value={vedopData.password}
+                      onChange={handleVedopChange}
+                      placeholder="Vedop şifresini girin"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-end space-x-4">
