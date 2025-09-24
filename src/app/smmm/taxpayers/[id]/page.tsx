@@ -116,18 +116,28 @@ export default function TaxpayerDetailPage() {
   const getDebtSummary = () => {
     if (!taxpayer) return { totalDebt: 0, unpaidMonths: 0 };
 
-    const currentYear = new Date().getFullYear();
-    const unpaidPayments = taxpayer.payments.filter(
-      p => p.year === currentYear && 
-           (p.paymentStatus === 'PENDING' || p.paymentStatus === 'OVERDUE')
-    );
-    
-    const totalDebt = unpaidPayments.reduce((sum, payment) => sum + payment.amount, 0);
-    
-    return {
-      totalDebt,
-      unpaidMonths: unpaidPayments.length
-    };
+    // Borç hesabı aylık bazda yapılır. Her ay için (geçmiş aylar),
+    // aylık ücret − o ayın ödenmiş toplamı. Negatif ise 0 kabul edilir.
+    const now = new Date();
+    const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const targetYear = prev.getFullYear();
+    const targetMonth = prev.getMonth() + 1;
+
+    let totalDebt = 0;
+    let unpaidMonths = 0;
+
+    for (let m = 1; m <= targetMonth; m++) {
+      const paidSumForMonth = (taxpayer.payments || [])
+        .filter(p => p.year === targetYear && p.month === m && p.paymentStatus === 'PAID')
+        .reduce((s, p) => s + Number(p.amount || 0), 0);
+      const monthlyDebt = Math.max(Number(taxpayer.monthlyFee || 0) - paidSumForMonth, 0);
+      if (monthlyDebt > 0) {
+        totalDebt += monthlyDebt;
+        unpaidMonths += 1;
+      }
+    }
+
+    return { totalDebt, unpaidMonths };
   };
 
   const exportPaymentsAsCSV = () => {
