@@ -392,7 +392,7 @@ export default function PaymentsPage() {
                                         taxpayerId: payment.taxpayer.id,
                                         year: payment.year,
                                         month: payment.month,
-                                        amount: payment.amount,
+                                        amount: Number(payment.amount || 0),
                                         paymentStatus: 'PAID',
                                         paymentDate: new Date().toISOString().split('T')[0],
                                         notes: 'Kalan bakiye ödemesi',
@@ -400,6 +400,9 @@ export default function PaymentsPage() {
                                     });
                                     if (res.ok) {
                                       await loadPayments();
+                                    } else {
+                                      const data = await res.json().catch(() => ({}));
+                                      alert(data?.error || 'Ödeme kaydedilemedi');
                                     }
                                   } catch (e) {}
                                 }}

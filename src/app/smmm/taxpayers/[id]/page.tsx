@@ -364,17 +364,24 @@ export default function TaxpayerDetailPage() {
                           const target = new Date(now.getFullYear(), now.getMonth() - 1, 1);
                           const ty = target.getFullYear();
                           const tm = target.getMonth() + 1;
-                          const hasPrev = list.some(p => p.year === ty && p.month === tm);
-                          if (!hasPrev) {
+                          // Partial payment: compute remaining for previous month
+                          const paidSum = list
+                            .filter(p => p.year === ty && p.month === tm && p.paymentStatus === 'PAID')
+                            .reduce((s, p) => s + Number(p.amount || 0), 0);
+                          const remaining = Math.max(Number(taxpayer.monthlyFee || 0) - paidSum, 0);
+                          const hasAnyRecord = list.some(p => p.year === ty && p.month === tm);
+                          if (remaining > 0) {
                             list.push({
                               id: `virtual-${taxpayer.id}-${ty}-${tm}`,
                               year: ty,
                               month: tm,
-                              amount: taxpayer.monthlyFee,
-                              paymentStatus: 'PENDING',
+                              amount: remaining,
+                              paymentStatus: now.getDate() > 20 ? 'OVERDUE' : 'PENDING',
                               paymentDate: undefined,
-                              notes: '',
+                              notes: 'Kalan bakiye',
                             });
+                          } else if (!hasAnyRecord) {
+                            // No payment needed and no rows – optional to add paid row of 0
                           }
                           return list.sort((a,b)=> b.year - a.year || b.month - a.month);
                         })()
@@ -405,7 +412,7 @@ export default function TaxpayerDetailPage() {
                                                   taxpayerId: taxpayer.id,
                                                   year: payment.year,
                                                   month: payment.month,
-                                                  amount: payment.amount,
+                                                  amount: Number(payment.amount || 0),
                                                   paymentStatus: 'PAID',
                                                   paymentDate: new Date().toISOString().split('T')[0],
                                                   notes: payment.notes || ''
