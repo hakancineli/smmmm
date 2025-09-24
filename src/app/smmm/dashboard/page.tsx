@@ -194,8 +194,22 @@ export default function SMMMDashboard() {
     const prevMonth = prev.getMonth() + 1;
 
     let unpaidTotal = 0;
+    // 1) Geçmiş aylar (yıl içi) için borç: varsayılan aylık ücret − o ayın tüm ödemeleri
     for (let m = 1; m <= prevMonth; m++) {
-      // Aylık kalan, o ayki TÜM ödemelerin (durumdan bağımsız) toplamına göre hesaplanır
+      const paidSum = payments
+        .filter((p: any) => p.year === year && p.month === m)
+        .reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+      const remaining = Math.max(monthlyFee - paidSum, 0);
+      unpaidTotal += remaining;
+    }
+
+    // 2) Gelecek ay(lar) için kayıt girilmişse ve kısmi ödeme kalmışsa onları da ekle
+    const futureMonthsSet = new Set<number>(
+      payments
+        .filter((p: any) => p.year === year && p.month > prevMonth)
+        .map((p: any) => p.month)
+    );
+    for (const m of futureMonthsSet) {
       const paidSum = payments
         .filter((p: any) => p.year === year && p.month === m)
         .reduce((s: number, p: any) => s + Number(p.amount || 0), 0);

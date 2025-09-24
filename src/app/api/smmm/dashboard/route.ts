@@ -111,6 +111,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Get monthly payment chart data
+    // Aylık grafik: sadece PAID değil, girilmiş tüm ödemeleri göster
     const monthlyPayments = await prisma.payment.groupBy({
       by: ['month'],
       where: {
