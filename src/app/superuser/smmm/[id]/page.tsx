@@ -1,0 +1,110 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+
+interface SMMMDetail {
+  id: string;
+  companyName: string;
+  username: string;
+  email?: string;
+  phone?: string;
+  subscriptionPlan?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { taxpayers: number };
+}
+
+export default function SMMMDetailPage() {
+  const router = useRouter();
+  const params = useParams();
+  const id = String(params?.id || '');
+
+  const [detail, setDetail] = useState<SMMMDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    const userType = localStorage.getItem('userType');
+    if (!token || userType !== 'superuser') {
+      router.push('/superuser/login');
+      return;
+    }
+
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/superuser/smmm/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data?.error || 'Kayıt yüklenemedi');
+        }
+        const data = await res.json();
+        setDetail(data.data);
+      } catch (e: any) {
+        setError(e.message || 'Sunucu hatası');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    if (id) load();
+  }, [id, router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="loading-spinner" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-danger-50 border border-danger-200 text-danger-700 px-4 py-3 rounded-md">{error}</div>
+      </div>
+    );
+  }
+
+  if (!detail) return null;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">SMMM Detayı</h1>
+              <p className="text-sm text-gray-600">{detail.companyName}</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button onClick={() => router.back()} className="btn btn-outline">Geri</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="card">
+            <div className="card-header"><h2 className="text-lg font-semibold">Hesap Bilgileri</h2></div>
+            <div className="card-body space-y-3">
+              <div className="flex justify-between"><span className="text-gray-600">Kullanıcı Adı</span><span className="font-medium">{detail.username}</span></div>
+              <div className="flex justify-between"><span className="text-gray-600">E‑posta</span><span className="font-medium">{detail.email || '-'}</span></div>
+              <div className="flex justify-between"><span className="text-gray-600">Telefon</span><span className="font-medium">{detail.phone || '-'}</span></div>
+              <div className="flex justify-between"><span className="text-gray-600">Plan</span><span className="font-medium">{detail.subscriptionPlan || 'BASIC'}</span></div>
+              <div className="flex justify-between"><span className="text-gray-600">Durum</span><span className={`badge ${detail.isActive ? 'badge-success' : 'badge-danger'}`}>{detail.isActive ? 'Aktif' : 'Pasif'}</span></div>
+              <div className="flex justify-between"><span className="text-gray-600">Oluşturulma</span><span className="font-medium">{new Date(detail.createdAt).toLocaleDateString('tr-TR')}</span></div>
+              <div className="flex justify-between"><span className="text-gray-600">Mükellef Sayısı</span><span className="font-medium">{detail._count?.taxpayers ?? 0}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+

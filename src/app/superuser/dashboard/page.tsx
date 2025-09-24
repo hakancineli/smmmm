@@ -240,9 +240,9 @@ export default function SuperuserDashboard() {
                             <button className="btn btn-outline btn-sm">
                               Düzenle
                             </button>
-                            <button className="btn btn-outline btn-sm">
+                            <Link href={`/superuser/smmm/${account.id}`} className="btn btn-outline btn-sm">
                               Detay
-                            </button>
+                            </Link>
                           </div>
                         </td>
                       </tr>
