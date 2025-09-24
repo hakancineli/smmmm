@@ -312,6 +312,8 @@ export default function TaxpayerDetailPage() {
 
   const debtSummary = getDebtSummary();
 
+  const displayedUserCode = (hasPassword && !editMode) ? (userCode || '********') : userCode;
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -794,7 +796,7 @@ function EArsivSection({ taxpayerId, initialUserCode }: { taxpayerId: string; in
             <label className="block text-sm font-medium text-gray-700 mb-1">Kullanıcı Kodu</label>
             <input
               className="input input-bordered w-full"
-              value={userCode}
+              value={displayedUserCode}
               onChange={(e)=>setUserCode(e.target.value)}
               placeholder="Örn: 49316084"
               name="earsiv_user_code"
@@ -802,6 +804,7 @@ function EArsivSection({ taxpayerId, initialUserCode }: { taxpayerId: string; in
               autoCorrect="off"
               spellCheck={false}
               disabled={hasPassword && !editMode}
+              readOnly={hasPassword && !editMode}
             />
           </div>
           <div>
