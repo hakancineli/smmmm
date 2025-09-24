@@ -77,6 +77,9 @@ export async function GET(request: NextRequest) {
           charges: {
             where: { status: 'PENDING' },
             orderBy: { createdAt: 'desc' },
+          },
+          earsivCredential: {
+            select: { userCode: true }
           }
         },
       }),

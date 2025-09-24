@@ -30,6 +30,7 @@ interface Taxpayer {
     amount: number;
     status: string;
   }[];
+  earsivCredential?: { userCode: string } | null;
 }
 
 interface PaginatedResponse {
@@ -525,6 +526,7 @@ export default function TaxpayersPage() {
                       <th className="table-header-cell">Ödeme Durumu</th>
                       <th className="table-header-cell">Borç Bakiyesi</th>
                       <th className="table-header-cell">Durum</th>
+                      <th className="table-header-cell hidden md:table-cell">E‑Arşiv</th>
                       <th className="table-header-cell sticky right-0 z-10 bg-white">İşlemler</th>
                     </tr>
                   </thead>
@@ -574,6 +576,13 @@ export default function TaxpayersPage() {
                             <span className={`badge ${taxpayer.isActive ? 'badge-success' : 'badge-danger'}`}>
                               {taxpayer.isActive ? 'Aktif' : 'Pasif'}
                             </span>
+                          </td>
+                          <td className="table-cell hidden md:table-cell">
+                            {taxpayer.earsivCredential?.userCode ? (
+                              <span className="text-green-600 text-xs">Tanımlı ({taxpayer.earsivCredential.userCode})</span>
+                            ) : (
+                              <Link href={`/smmm/taxpayers/${taxpayer.id}`} className="text-primary-600 text-xs underline">Bilgi Gir</Link>
+                            )}
                           </td>
                           <td className="table-cell sticky right-0 z-0 bg-white">
                             <div className="flex space-x-2">
