@@ -379,6 +379,34 @@ export default function PaymentsPage() {
                         </td>
                         <td className="table-cell">
                           <div className="flex space-x-2">
+                            {String(payment.id).startsWith('virtual-') && (
+                              <button
+                                className="btn btn-primary btn-sm"
+                                onClick={async () => {
+                                  try {
+                                    const token = localStorage.getItem('accessToken');
+                                    const res = await fetch('/api/smmm/payments', {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                      body: JSON.stringify({
+                                        taxpayerId: payment.taxpayer.id,
+                                        year: payment.year,
+                                        month: payment.month,
+                                        amount: payment.amount,
+                                        paymentStatus: 'PAID',
+                                        paymentDate: new Date().toISOString().split('T')[0],
+                                        notes: 'Kalan bakiye ödemesi',
+                                      }),
+                                    });
+                                    if (res.ok) {
+                                      await loadPayments();
+                                    }
+                                  } catch (e) {}
+                                }}
+                              >
+                                Kalanı Öde
+                              </button>
+                            )}
                             <Link
                               href={`/smmm/taxpayers/${payment.taxpayer.id}`}
                               className="btn btn-outline btn-sm"
