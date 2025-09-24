@@ -761,17 +761,46 @@ function EArsivSection({ taxpayerId, initialUserCode }: { taxpayerId: string; in
         <div className="grid grid-cols-1 gap-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Kullanıcı Kodu</label>
-            <input className="input input-bordered w-full" value={userCode} onChange={(e)=>setUserCode(e.target.value)} placeholder="Örn: 49316084" />
+            <input
+              className="input input-bordered w-full"
+              value={userCode}
+              onChange={(e)=>setUserCode(e.target.value)}
+              placeholder="Örn: 49316084"
+              name="earsiv_user_code"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Şifre</label>
-            <input className="input input-bordered w-full" type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="••••••" />
+            <input
+              className="input input-bordered w-full"
+              type="password"
+              value={password}
+              onChange={(e)=>setPassword(e.target.value)}
+              placeholder="••••••"
+              name="earsiv_password"
+              autoComplete="new-password"
+              autoCorrect="off"
+              spellCheck={false}
+            />
           </div>
         </div>
-        <div className="flex justify-end">
-          <button className="btn btn-primary" onClick={save}>Kaydet</button>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <a
+            href="https://earsivportal.efatura.gov.tr/intragiris.html"
+            target="_blank"
+            rel="noreferrer"
+            className="btn btn-outline flex-1 min-w-[180px]"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 3h7v7m0-7L10 14" />
+            </svg>
+            e‑Arşiv Portal
+          </a>
+          <button className="btn btn-primary flex-1 min-w-[140px]" onClick={save}>Kaydet</button>
         </div>
-        <p className="text-xs text-gray-500">Giriş sayfası: <a className="text-primary-600 underline" href="https://earsivportal.efatura.gov.tr/intragiris.html" target="_blank" rel="noreferrer">e‑Arşiv Portal</a></p>
       </div>
     </div>
   );
