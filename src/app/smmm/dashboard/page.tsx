@@ -209,13 +209,13 @@ export default function SMMMDashboard() {
         .filter((p: any) => p.year === year && p.month > prevMonth)
         .map((p: any) => p.month)
     );
-    for (const m of futureMonthsSet) {
+    futureMonthsSet.forEach((m) => {
       const paidSum = payments
         .filter((p: any) => p.year === year && p.month === m)
         .reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
       const remaining = Math.max(monthlyFee - paidSum, 0);
       unpaidTotal += remaining;
-    }
+    });
 
     // Serbest kalemler (PENDING): tek seferlik borç, doğrudan toplam borca eklenir
     const pendingCharges = charges
