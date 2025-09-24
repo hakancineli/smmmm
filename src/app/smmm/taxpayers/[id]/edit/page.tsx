@@ -31,6 +31,10 @@ export default function EditTaxpayerPage() {
     monthlyFee: '',
     isActive: true,
   });
+  const [vedopData, setVedopData] = useState({
+    userCode: '',
+    password: '',
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState('');
@@ -42,6 +46,7 @@ export default function EditTaxpayerPage() {
   useEffect(() => {
     if (taxpayerId) {
       loadTaxpayerData();
+      loadVedopData();
     }
   }, [taxpayerId]);
 
@@ -84,6 +89,29 @@ export default function EditTaxpayerPage() {
     }
   };
 
+  const loadVedopData = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`/api/smmm/earsiv/credentials?taxpayerId=${taxpayerId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setVedopData({
+            userCode: data.data.userCode || '',
+            password: data.data.hasPassword ? '********' : '',
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Vedop bilgileri yüklenemedi:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -112,6 +140,19 @@ export default function EditTaxpayerPage() {
       const data = await response.json();
 
       if (response.ok) {
+        // Save Vedop credentials if provided
+        if (vedopData.userCode && vedopData.password && vedopData.password !== '********') {
+          try {
+            await fetch('/api/smmm/earsiv/credentials', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ taxpayerId, userCode: vedopData.userCode, password: vedopData.password })
+            });
+          } catch (err) {
+            console.error('Vedop bilgileri kaydedilemedi:', err);
+          }
+        }
+        
         setSuccess('Mükellef başarıyla güncellendi!');
         // Redirect to taxpayer detail page after 2 seconds
         setTimeout(() => {
@@ -133,6 +174,14 @@ export default function EditTaxpayerPage() {
       ...formData,
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
     });
+  };
+
+  const handleVedopChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setVedopData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   if (isLoadingData) {
@@ -346,6 +395,42 @@ export default function EditTaxpayerPage() {
                   <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
                     Aktif Mükellef
                   </label>
+                </div>
+              </div>
+
+              {/* Vedop Bilgileri */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Vedop Giriş Bilgileri</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="vedopUserCode" className="label">
+                      Vedop Kullanıcı Kodu
+                    </label>
+                    <input
+                      id="vedopUserCode"
+                      name="userCode"
+                      type="text"
+                      className="input"
+                      value={vedopData.userCode}
+                      onChange={handleVedopChange}
+                      placeholder="Vedop kullanıcı kodunu girin"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="vedopPassword" className="label">
+                      Vedop Şifre
+                    </label>
+                    <input
+                      id="vedopPassword"
+                      name="password"
+                      type="password"
+                      className="input"
+                      value={vedopData.password}
+                      onChange={handleVedopChange}
+                      placeholder="Vedop şifresini girin"
+                    />
+                  </div>
                 </div>
               </div>
 
