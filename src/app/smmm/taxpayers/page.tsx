@@ -127,17 +127,21 @@ export default function TaxpayersPage() {
       p => p.year === targetYear && p.month === targetMonth
     );
 
+    // Önceki ay için durum
     if (payment) {
       if (payment.paymentStatus === 'PAID') return { status: 'paid', text: 'Ödendi' };
       if (payment.paymentStatus === 'OVERDUE') return { status: 'overdue', text: 'Gecikti' };
+      // PENDING
+      return now.getDate() > overdueDay
+        ? { status: 'overdue', text: 'Gecikti' }
+        : { status: 'pending', text: 'Bekliyor' };
     }
 
-    // Otomatik gecikme kuralı: ayın 20'si sonrası ve henüz ödenmediyse "Gecikti"
-    if (now.getDate() > overdueDay) {
-      return { status: 'overdue', text: 'Gecikti' };
-    }
-
-    return { status: 'pending', text: 'Bekliyor' };
+    // Kayıt yoksa: önceki ay ödenmemiş kabul edilir → 20'sinden sonra "Gecikti",
+    // içinde bulunduğumuz ay için asla "Gecikti" demeyiz
+    return now.getDate() > overdueDay
+      ? { status: 'overdue', text: 'Gecikti' }
+      : { status: 'pending', text: 'Bekliyor' };
   };
 
   const getDebtBalance = (taxpayer: Taxpayer) => {
@@ -507,21 +511,21 @@ export default function TaxpayersPage() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="table">
+              <div className="w-full">
+                <table className="table w-full table-fixed">
                   <thead className="table-header">
                     <tr>
-                      <th className="table-header-cell sticky left-0 z-10 bg-white">Ad Soyad</th>
-                      <th className="table-header-cell">Şirket Ünvanı</th>
-                      <th className="table-header-cell">TC No</th>
-                      <th className="table-header-cell">Vergi No</th>
-                      <th className="table-header-cell">E-posta</th>
-                      <th className="table-header-cell">Telefon</th>
-                      <th className="table-header-cell">Aylık Ücret</th>
-                      <th className="table-header-cell">Ödeme Durumu</th>
-                      <th className="table-header-cell">Borç Bakiyesi</th>
-                      <th className="table-header-cell">Durum</th>
-                      <th className="table-header-cell sticky right-0 z-10 bg-white">İşlemler</th>
+                      <th className="table-header-cell sticky left-0 z-10 bg-white w-36">Ad Soyad</th>
+                      <th className="table-header-cell w-40">Şirket Ünvanı</th>
+                      <th className="table-header-cell w-28">TC No</th>
+                      <th className="table-header-cell w-28">Vergi No</th>
+                      <th className="table-header-cell w-48">E-posta</th>
+                      <th className="table-header-cell w-36">Telefon</th>
+                      <th className="table-header-cell w-24">Aylık Ücret</th>
+                      <th className="table-header-cell w-28">Ödeme Durumu</th>
+                      <th className="table-header-cell w-40">Borç Bakiyesi</th>
+                      <th className="table-header-cell w-20">Durum</th>
+                      <th className="table-header-cell sticky right-0 z-10 bg-white w-28">İşlemler</th>
                     </tr>
                   </thead>
                   <tbody className="table-body">
@@ -530,20 +534,20 @@ export default function TaxpayersPage() {
                       const debtBalance = getDebtBalance(taxpayer);
                       return (
                         <tr key={taxpayer.id} className="table-row">
-                          <td className="table-cell font-medium sticky left-0 z-0 bg-white">
+                          <td className="table-cell font-medium sticky left-0 z-0 bg-white break-words whitespace-normal">
                             {taxpayer.firstName} {taxpayer.lastName}
                           </td>
-                          <td className="table-cell">
+                          <td className="table-cell break-words whitespace-normal">
                             {taxpayer.companyName || '-'}
                           </td>
-                          <td className="table-cell">{taxpayer.tcNumber}</td>
-                          <td className="table-cell">{taxpayer.taxNumber || '-'}</td>
-                          <td className="table-cell">{taxpayer.email || '-'}</td>
-                          <td className="table-cell">{taxpayer.phone || '-'}</td>
-                          <td className="table-cell">
+                          <td className="table-cell break-words whitespace-normal">{taxpayer.tcNumber}</td>
+                          <td className="table-cell break-words whitespace-normal">{taxpayer.taxNumber || '-'}</td>
+                          <td className="table-cell break-words whitespace-normal">{taxpayer.email || '-'}</td>
+                          <td className="table-cell break-words whitespace-normal">{taxpayer.phone || '-'}</td>
+                          <td className="table-cell break-words whitespace-normal">
                             ₺{taxpayer.monthlyFee.toLocaleString('tr-TR')}
                           </td>
-                          <td className="table-cell">
+                          <td className="table-cell break-words whitespace-normal">
                             <span className={`badge ${
                               paymentStatus.status === 'paid' ? 'badge-success' :
                               paymentStatus.status === 'overdue' ? 'badge-danger' :

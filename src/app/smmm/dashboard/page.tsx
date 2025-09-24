@@ -177,10 +177,11 @@ export default function SMMMDashboard() {
     if (payment) {
       if (payment.paymentStatus === 'PAID') return { status: 'Ödendi', color: 'success' };
       if (payment.paymentStatus === 'OVERDUE') return { status: 'Gecikti', color: 'danger' };
+      return now.getDate() > overdueDay ? { status: 'Gecikti', color: 'danger' } : { status: 'Bekliyor', color: 'warning' };
     }
 
-    if (now.getDate() > overdueDay) return { status: 'Gecikti', color: 'danger' };
-    return { status: 'Bekliyor', color: 'warning' };
+    // Önceki ay için kayıt yoksa 20'sinden sonra Gecikti; içinde olduğumuz ay için asla gecikmiş demeyiz
+    return now.getDate() > overdueDay ? { status: 'Gecikti', color: 'danger' } : { status: 'Bekliyor', color: 'warning' };
   };
 
   const getDebtSummary = (taxpayer: Taxpayer) => {
